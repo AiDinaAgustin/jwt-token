@@ -1,9 +1,11 @@
 package com.example.jwt_token.controller;
 
 import com.example.jwt_token.model.Product;
+import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,23 +20,25 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<?> getAllProducts() {
         var products = productService.getAllProducts();
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(new ApiResponse<>("Products retrieved successfully", HttpStatus.OK, products));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable Long id) {
         var product = productService.getProductById(id);
         if (product == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("Product not found", HttpStatus.NOT_FOUND));
         }
-        return ResponseEntity.ok(product);
+        return ResponseEntity.ok(new ApiResponse<>("Product retrieved successfully", HttpStatus.OK, product));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
         var savedProduct = productService.saveProduct(product);
-        return ResponseEntity.ok(savedProduct);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>("Product created successfully", HttpStatus.CREATED, savedProduct));
     }
 
     @PutMapping("/{id}")
@@ -47,7 +51,7 @@ public class ProductController {
         existingProduct.setName(product.getName());
         existingProduct.setPrice(product.getPrice());
         var updatedProduct = productService.saveProduct(existingProduct);
-        return ResponseEntity.ok(updatedProduct);
+        return ResponseEntity.ok(new ApiResponse<>("Product updated successfully", HttpStatus.OK, updatedProduct));
     }
 
     @DeleteMapping
