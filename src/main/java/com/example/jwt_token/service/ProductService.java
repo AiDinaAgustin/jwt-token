@@ -12,7 +12,10 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     // Get all products
-    public List<Product> getAllProducts() {
+    public List<Product> getAllProducts(String keyword) {
+        if (keyword != null && !keyword.isEmpty()) {
+            return productRepository.search(keyword);
+        }
         return productRepository.findAll();
     }
 

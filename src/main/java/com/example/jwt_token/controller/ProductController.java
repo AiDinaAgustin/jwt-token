@@ -5,6 +5,7 @@ import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,8 +19,8 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<?> getAllProducts() {
-        var products = productService.getAllProducts();
+    public ResponseEntity<?> getAllProducts(@Param("keyword") String keyword) {
+        var products = productService.getAllProducts(keyword);
         return ResponseEntity.ok(new ApiResponse<>("Products retrieved successfully", HttpStatus.OK, products));
     }
 
