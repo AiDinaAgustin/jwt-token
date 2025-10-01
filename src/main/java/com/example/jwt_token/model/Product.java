@@ -27,6 +27,13 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
+//    @NotNull
+//    @Column(nullable = false)
+//    private int quantity;
+//
+//    @NotNull
+//    private Long categoryId;
+
     public Product(String name, BigDecimal price) {
         this.name = name;
         this.price = price;
