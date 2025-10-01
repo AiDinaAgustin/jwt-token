@@ -37,14 +37,8 @@ public class JwtService {
 
     // Generate Refresh Token
     public String generateRefreshToken(Authentication authentication) {
-        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
-
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-
         Map<String, String> claims = new HashMap<>();
         claims.put("tokenType", "refresh");
-
         return generateToken(authentication, refreshExpirationMs, claims);
     }
 
@@ -55,8 +49,11 @@ public class JwtService {
         Date expiryDate = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
+                .header()
+                .add("typ", "JWT")
+                .and()
                 .subject(userPrincipal.getUsername())
-                .setClaims(claims)
+                .claims(claims)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSignInKey())
@@ -92,13 +89,30 @@ public class JwtService {
     }
 
     public String extractUsername(String token) {
-        return Jwts.parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        Claims claims = extractAllClaims(token);
+
+        if(claims != null) {
+            return claims.getSubject();
+        }
+        return null;
     }
+
+    private Claims extractAllClaims(String token) {
+        Claims claims = null;
+
+        try {
+            claims = Jwts.parser()
+                    .verifyWith(getSignInKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        }
+
+        return claims;
+    }
+
     // Validate if the token is refresh token
     public boolean isRefreshToken(String token) {
         try {
