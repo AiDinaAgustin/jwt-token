@@ -1,6 +1,8 @@
 package com.example.jwt_token.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,9 +18,12 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
+    @NotNull
+    @Size(min = 2, max = 100)
     @Column(nullable = false)
     private String name;
 
+    @NotNull
     @Column(nullable = false)
     private BigDecimal price;
 
