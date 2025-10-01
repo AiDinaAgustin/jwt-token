@@ -61,31 +61,8 @@ public class JwtService {
     }
 
     // Validate Token
-    public boolean isValidToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-
-        if(!username.equals(userDetails.getUsername())) {
-            return false;
-        }
-
-        try {
-            Jwts.parser()
-                    .verifyWith(getSignInKey())
-                    .build()
-                    .parseSignedClaims(token);
-            return true;
-        } catch (SignatureException e) {
-            log.error("Invalid JWT signature: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            log.error("JWT token is expired: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("JWT token is unsupported: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}", e.getMessage());
-        }
-        return false;
+    public boolean isValidToken(String token) {
+        return extractAllClaims(token) != null;
     }
 
     public String extractUsername(String token) {
@@ -95,6 +72,14 @@ public class JwtService {
             return claims.getSubject();
         }
         return null;
+    }
+
+    public boolean isRefreshToken(String token) {
+        Claims claims = extractAllClaims(token);
+        if(claims == null) {
+            return false;
+        }
+        return "refresh".equals(claims.get("tokenType"));
     }
 
     private Claims extractAllClaims(String token) {
@@ -113,30 +98,15 @@ public class JwtService {
         return claims;
     }
 
-    // Validate if the token is refresh token
-    public boolean isRefreshToken(String token) {
-        try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(getSignInKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-
-            String tokenType = claims.get("tokenType", String.class);
-            return "refresh".equals(tokenType);
-        } catch (Exception e) {
-            log.error("Error while validating refresh token: {}", e.getMessage());
-            return false;
-        }
+    public boolean validateTokenForUser(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return username != null
+                && username.equals(userDetails.getUsername());
     }
 
     private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    public boolean isTokenValid(String jwt, UserDetails userDetails) {
-        return isValidToken(jwt, userDetails);
     }
 
     public TokenPair generateTokenPair(Authentication authentication) {

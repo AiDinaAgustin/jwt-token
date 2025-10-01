@@ -31,14 +31,14 @@ public class ProductController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
         var savedProduct = productService.saveProduct(product);
         return ResponseEntity.ok(savedProduct);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateProduct(@PathVariable Long id, @Valid @RequestBody Product product) {
         var existingProduct = productService.getProductById(id);
         if (existingProduct == null) {
