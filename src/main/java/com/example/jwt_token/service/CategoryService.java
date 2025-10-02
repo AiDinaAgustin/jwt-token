@@ -14,7 +14,10 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     // Get All Categories
-    public List<Category> getAllCategories() {
+    public List<Category> getAllCategories(String keyword) {
+        if (keyword != null && !keyword.isEmpty()) {
+            return categoryRepository.search(keyword);
+        }
         return categoryRepository.findAll();
     }
 

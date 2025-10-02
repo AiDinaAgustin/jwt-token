@@ -4,6 +4,7 @@ import com.example.jwt_token.model.Category;
 import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.service.CategoryService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +17,8 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<?> getAllcategories() {
-        var categories = categoryService.getAllCategories();
+    public ResponseEntity<?> getAllcategories(@Param("keyword") String keyword) {
+        var categories = categoryService.getAllCategories(keyword);
         return ResponseEntity.ok(new ApiResponse<>("Categories retrieved successfully", HttpStatus.OK, categories));
     }
 
