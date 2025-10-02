@@ -22,6 +22,14 @@ public class Category {
     @Size(min = 2, max = 50)
     private String name;
 
+    @Column(nullable = false, unique = true)
+    @Size(min = 2, max = 50)
+    private String slug;
+
+    @Column(nullable = false)
+    @Size(min= 5, max = 500)
+    private String description;
+
     @JsonManagedReference
     @OneToMany(mappedBy = "category",
             cascade = CascadeType.ALL,
