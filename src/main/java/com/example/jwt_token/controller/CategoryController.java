@@ -17,8 +17,11 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<?> getAllcategories(@Param("keyword") String keyword) {
-        var categories = categoryService.getAllCategories(keyword);
+    public ResponseEntity<?> getAllcategories(
+            @Param("keyword") String keyword,
+            @RequestParam(defaultValue= "0") Integer page,
+            @RequestParam(defaultValue= "10") Integer size) {
+        var categories = categoryService.getAllCategories(keyword, page, size);
         return ResponseEntity.ok(new ApiResponse<>("Categories retrieved successfully", HttpStatus.OK, categories));
     }
 

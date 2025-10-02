@@ -3,7 +3,9 @@ package com.example.jwt_token.service;
 import com.example.jwt_token.model.Category;
 import com.example.jwt_token.repository.CategoryRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -14,11 +16,12 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     // Get All Categories
-    public List<Category> getAllCategories(String keyword) {
+    public List<Category> getAllCategories(String keyword, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page, size);
         if (keyword != null && !keyword.isEmpty()) {
-            return categoryRepository.search(keyword);
+            return categoryRepository.search(keyword, pageable);
         }
-        return categoryRepository.findAll();
+            return categoryRepository.findAll(pageable).getContent();
     }
 
     // Get Category by ID
