@@ -4,6 +4,7 @@ import com.example.jwt_token.model.Category;
 import com.example.jwt_token.repository.CategoryRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
 
@@ -16,8 +17,9 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     // Get All Categories
-    public List<Category> getAllCategories(String keyword, Integer page, Integer size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public List<Category> getAllCategories(String keyword, Integer page, Integer size, String sortBy, Boolean ascending) {
+        Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
         if (keyword != null && !keyword.isEmpty()) {
             return categoryRepository.search(keyword, pageable);
         }
