@@ -1,5 +1,6 @@
 package com.example.jwt_token.service;
 
+import com.example.jwt_token.dto.ProductRequest;
 import com.example.jwt_token.model.Product;
 import com.example.jwt_token.repository.ProductRepository;
 import lombok.AllArgsConstructor;
@@ -25,12 +26,31 @@ public class ProductService {
     }
 
     // Save/New a new product
-    public Product saveProduct(Product product) {
+    public Product saveProduct(ProductRequest productRequest) {
+        Product product = new Product();
+        product.setName(productRequest.getName());
+        product.setPrice(productRequest.getPrice());
+        product.setQuantity(productRequest.getQuantity());
+        product.setCategory(productRequest.getCategory());
         return productRepository.save(product);
     }
 
+    // Update an existing product
+    public Product updateProduct(Long id, ProductRequest productRequest) {
+        return productRepository.findById(id).map(existingProduct -> {
+            existingProduct.setName(productRequest.getName());
+            existingProduct.setPrice(productRequest.getPrice());
+            existingProduct.setQuantity(productRequest.getQuantity());
+            existingProduct.setCategory(productRequest.getCategory());
+            return productRepository.save(existingProduct);
+        }).orElse(null);
+    }
+
     // Delete a product by ID
-    public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+    public boolean deleteProduct(Long id) {
+        return productRepository.findById(id).map(product -> {
+            productRepository.delete(product);
+            return true;
+        }).orElse(false);
     }
 }

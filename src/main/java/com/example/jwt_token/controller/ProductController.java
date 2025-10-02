@@ -1,5 +1,6 @@
 package com.example.jwt_token.controller;
 
+import com.example.jwt_token.dto.ProductRequest;
 import com.example.jwt_token.model.Category;
 import com.example.jwt_token.model.Product;
 import com.example.jwt_token.response.ApiResponse;
@@ -39,7 +40,7 @@ public class ProductController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
+    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductRequest product) {
         if (product.getCategory() != null && product.getCategory().getId() != null) {
             Category category = categoryService.getCategoryById(product.getCategory().getId());
             if (category == null) {
@@ -58,21 +59,26 @@ public class ProductController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateProduct(@PathVariable Long id, @Valid @RequestBody Product product) {
-        var existingProduct = productService.getProductById(id);
-        if (existingProduct == null) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest product) {
+        if (product.getCategory() != null && product.getCategory().getId() != null) {
+            Category category = categoryService.getCategoryById(product.getCategory().getId());
+            if (category == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>("Invalid category ID", HttpStatus.BAD_REQUEST));
+            }
+            product.setCategory(category);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Category is required", HttpStatus.BAD_REQUEST));
         }
-        existingProduct.setName(product.getName());
-        existingProduct.setPrice(product.getPrice());
-        var updatedProduct = productService.saveProduct(existingProduct);
+        var updatedProduct = productService.updateProduct(id, product);
         return ResponseEntity.ok(new ApiResponse<>("Product updated successfully", HttpStatus.OK, updatedProduct));
     }
 
-    @DeleteMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<?> deleteProduct(@RequestParam Long id) {
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse<>("Product deleted successfully", HttpStatus.OK));
     }
 }
