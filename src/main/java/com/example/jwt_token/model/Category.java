@@ -1,5 +1,6 @@
 package com.example.jwt_token.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
@@ -30,11 +31,11 @@ public class Category {
     @Size(min= 5, max = 500)
     private String description;
 
-    @JsonManagedReference
     @OneToMany(mappedBy = "category",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
     fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"category"})
     private List<Product> products;
 
 
