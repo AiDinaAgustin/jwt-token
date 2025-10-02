@@ -34,6 +34,7 @@ public class ProductService {
     public Product saveProduct(ProductRequest productRequest) {
         Product product = new Product();
         product.setName(productRequest.getName());
+        product.setSlug(productRequest.getSlug());
         product.setPrice(productRequest.getPrice());
         product.setQuantity(productRequest.getQuantity());
         product.setCategory(productRequest.getCategory());
@@ -44,6 +45,7 @@ public class ProductService {
     public Product updateProduct(Long id, ProductRequest productRequest) {
         return productRepository.findById(id).map(existingProduct -> {
             existingProduct.setName(productRequest.getName());
+            existingProduct.setSlug(productRequest.getSlug());
             existingProduct.setPrice(productRequest.getPrice());
             existingProduct.setQuantity(productRequest.getQuantity());
             existingProduct.setCategory(productRequest.getCategory());

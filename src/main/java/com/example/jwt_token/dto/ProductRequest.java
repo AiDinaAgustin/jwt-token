@@ -21,6 +21,10 @@ public class ProductRequest {
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     private String name;
 
+    @NotBlank(message = "Slug is required")
+    @Size(min = 3, max = 100, message = "Slug must be between 3 and 100 characters")
+    private String slug;
+
     @NotNull(message = "Price is required")
     private BigDecimal price;
 

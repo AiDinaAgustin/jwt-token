@@ -25,6 +25,11 @@ public class Product {
     private String name;
 
     @NotNull
+    @Column(nullable = false, unique = true)
+    @Size(min = 2, max = 100)
+    private String slug;
+
+    @NotNull
     @Column(nullable = false)
     private BigDecimal price;
 
@@ -37,8 +42,9 @@ public class Product {
     @JoinColumn(name = "category_id", referencedColumnName = "id")
     private Category category;
 
-    public Product(String name, BigDecimal price, int quantity, Category category) {
+    public Product(String name, String slug, BigDecimal price, int quantity, Category category) {
         this.name = name;
+        this.slug = slug;
         this.price = price;
         this.quantity = quantity;
         this.category = category;
