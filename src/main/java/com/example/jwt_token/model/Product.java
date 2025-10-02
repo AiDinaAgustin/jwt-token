@@ -38,10 +38,6 @@ public class Product {
     @Column(nullable = false)
     private int quantity;
 
-//    @JsonBackReference
-//    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-//    @JoinColumn(name = "category_id", referencedColumnName = "id")
-//    private Category category;
     @JsonIgnoreProperties({"products"})
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
