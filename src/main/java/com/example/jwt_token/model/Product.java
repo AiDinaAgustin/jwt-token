@@ -1,5 +1,6 @@
 package com.example.jwt_token.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,15 +28,19 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
-//    @NotNull
-//    @Column(nullable = false)
-//    private int quantity;
-//
-//    @NotNull
-//    private Long categoryId;
+    @NotNull
+    @Column(nullable = false)
+    private int quantity;
 
-    public Product(String name, BigDecimal price) {
+    @JsonBackReference
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", referencedColumnName = "id")
+    private Category category;
+
+    public Product(String name, BigDecimal price, int quantity, Category category) {
         this.name = name;
         this.price = price;
+        this.quantity = quantity;
+        this.category = category;
     }
 }

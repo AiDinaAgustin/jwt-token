@@ -1,7 +1,9 @@
 package com.example.jwt_token.controller;
 
+import com.example.jwt_token.model.Category;
 import com.example.jwt_token.model.Product;
 import com.example.jwt_token.response.ApiResponse;
+import com.example.jwt_token.service.CategoryService;
 import com.example.jwt_token.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
     private final ProductService productService;
+    private final CategoryService categoryService;
 
     @GetMapping
     public ResponseEntity<?> getAllProducts(@Param("keyword") String keyword) {
@@ -37,6 +40,17 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
+        if (product.getCategory() != null && product.getCategory().getId() != null) {
+            Category category = categoryService.getCategoryById(product.getCategory().getId());
+            if (category == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>("Invalid category ID", HttpStatus.BAD_REQUEST));
+            }
+            product.setCategory(category);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Category is required", HttpStatus.BAD_REQUEST));
+        }
         var savedProduct = productService.saveProduct(product);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("Product created successfully", HttpStatus.CREATED, savedProduct));
