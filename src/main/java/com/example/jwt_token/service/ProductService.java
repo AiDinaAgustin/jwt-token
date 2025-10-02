@@ -6,6 +6,7 @@ import com.example.jwt_token.repository.ProductRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,8 +16,9 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     // Get all products
-    public List<Product> getAllProducts(String keyword, Integer page, Integer size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public List<Product> getAllProducts(String keyword, Integer page, Integer size, String sortBy, Boolean ascending) {
+        Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
         if (keyword != null && !keyword.isEmpty()) {
             return productRepository.search(keyword, pageable).getContent();
         }
