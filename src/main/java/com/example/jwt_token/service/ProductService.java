@@ -4,6 +4,8 @@ import com.example.jwt_token.dto.ProductRequest;
 import com.example.jwt_token.model.Product;
 import com.example.jwt_token.repository.ProductRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,11 +15,12 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     // Get all products
-    public List<Product> getAllProducts(String keyword) {
+    public List<Product> getAllProducts(String keyword, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page, size);
         if (keyword != null && !keyword.isEmpty()) {
-            return productRepository.search(keyword);
+            return productRepository.search(keyword, pageable).getContent();
         }
-        return productRepository.findAll();
+        return productRepository.findAll(pageable).getContent();
     }
 
     // Get product by ID

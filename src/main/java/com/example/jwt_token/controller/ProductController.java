@@ -23,8 +23,12 @@ public class ProductController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<?> getAllProducts(@Param("keyword") String keyword) {
-        var products = productService.getAllProducts(keyword);
+    public ResponseEntity<?> getAllProducts(
+            @RequestParam("keyword")
+            String keyword,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        var products = productService.getAllProducts(keyword, page, size);
         return ResponseEntity.ok(new ApiResponse<>("Products retrieved successfully", HttpStatus.OK, products));
     }
 
