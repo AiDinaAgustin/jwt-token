@@ -2,6 +2,7 @@ package com.example.jwt_token.controller;
 
 import com.example.jwt_token.model.Category;
 import com.example.jwt_token.response.ApiResponse;
+import com.example.jwt_token.response.PaginatedResult;
 import com.example.jwt_token.service.CategoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.repository.query.Param;
@@ -20,11 +21,15 @@ public class CategoryController {
     public ResponseEntity<?> getAllcategories(
             @Param("keyword") String keyword,
             @RequestParam(defaultValue= "0") Integer page,
-            @RequestParam(defaultValue= "10") Integer size,
-            @RequestParam(defaultValue= "id") String sortBy,
-            @RequestParam(defaultValue= "true") Boolean ascending) {
-        var categories = categoryService.getAllCategories(keyword, page, size, sortBy, ascending);
-        return ResponseEntity.ok(new ApiResponse<>("Categories retrieved successfully", HttpStatus.OK, categories));
+            @RequestParam(defaultValue= "10") Integer limit,
+            @RequestParam(defaultValue= "id") String sort,
+            @RequestParam(defaultValue= "ASC") String order) {
+
+        var categories = categoryService.getAllCategories(keyword, page, limit, sort, order);
+
+        PaginatedResult<?> paginated = new PaginatedResult<>(categories);
+
+        return ResponseEntity.ok(new ApiResponse<>("Categories retrieved successfully", HttpStatus.OK, paginated));
     }
 
     @GetMapping("/{id}")
