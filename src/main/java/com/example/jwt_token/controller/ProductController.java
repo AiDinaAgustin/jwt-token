@@ -29,8 +29,8 @@ public class ProductController {
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer limit,
             @RequestParam(defaultValue = "id") String sort,
-            @RequestParam(defaultValue = "true") Boolean ascending) {
-        var products = productService.getAllProducts(keyword, page, limit, sort, ascending);
+            @RequestParam(defaultValue = "ASC") String order) {
+        var products = productService.getAllProducts(keyword, page, limit, sort, order);
         return ResponseEntity.ok(new ApiResponse<>("Products retrieved successfully", HttpStatus.OK, products));
     }
 
