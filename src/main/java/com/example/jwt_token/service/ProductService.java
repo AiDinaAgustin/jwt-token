@@ -8,6 +8,10 @@ import com.example.jwt_token.repository.ProductRepository;
 import lombok.AllArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -180,4 +185,49 @@ public class ProductService {
             productRepository.saveAll(products);
         }
     }
+
+    public void importProductsFromWord(MultipartFile file) throws IOException {
+        try (InputStream inputStream = file.getInputStream();
+             XWPFDocument document = new XWPFDocument(inputStream)) {
+
+            List<XWPFTable> tables = document.getTables();
+
+            if (tables.isEmpty()) {
+                throw new IllegalArgumentException("No tables found in Word document");
+            }
+
+            XWPFTable table = tables.get(0); // Ambil tabel pertama di dokumen
+
+            // Lewati baris header (mulai dari index 1)
+            for (int i = 1; i < table.getRows().size(); i++) {
+                XWPFTableRow row = table.getRow(i);
+                List<XWPFTableCell> cells = row.getTableCells();
+
+                if (cells.size() < 6) continue; // Pastikan kolom cukup
+
+                String idText = cells.get(0).getText();
+                String name = cells.get(1).getText();
+                String slug = cells.get(2).getText();
+                String priceText = cells.get(3).getText();
+                String quantityText = cells.get(4).getText();
+                String categoryName = cells.get(5).getText();
+
+                // Parsing data
+                BigDecimal price = new BigDecimal(priceText);
+                int quantity = Integer.parseInt(quantityText);
+
+                Category category = categoryRepository.findByName(categoryName).orElse(null);
+
+                Product product = new Product();
+                product.setName(name);
+                product.setSlug(slug);
+                product.setPrice(price);
+                product.setQuantity(quantity);
+                product.setCategory(category);
+
+                productRepository.save(product);
+            }
+        }
+    }
+
 }

@@ -133,7 +133,7 @@ public class ProductController {
 
 
     @PostMapping(
-            value = "/import",
+            value = "/import-excel",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     @PreAuthorize("hasRole('ADMIN')")
@@ -157,5 +157,17 @@ public class ProductController {
                     .body(new ApiResponse<>("Failed to import products: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
+
+    @PostMapping(value = "/import-word", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> importProductsFromWord(@RequestParam("file") MultipartFile file) {
+        try {
+            productService.importProductsFromWord(file);
+            return ResponseEntity.ok("Products imported successfully from Word file");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to import products: " + e.getMessage());
+        }
+    }
+
 
 }
