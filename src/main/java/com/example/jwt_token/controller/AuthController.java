@@ -1,12 +1,11 @@
 package com.example.jwt_token.controller;
 
-import com.example.jwt_token.dto.LoginRequest;
-import com.example.jwt_token.dto.RefreshTokenRequest;
-import com.example.jwt_token.dto.RegisterRequest;
-import com.example.jwt_token.dto.TokenPair;
+import com.example.jwt_token.dto.*;
+import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,13 +23,21 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
         // save user to database and return response
         authService.registerUser(request);
-        return ResponseEntity.ok("User registered successfully");
+
+        UserResponse userResponse = new UserResponse(
+                request.getFullName(),
+                request.getUsername(),
+                request.getRole()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>("User registered successfully", HttpStatus.CREATED, userResponse));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest request) {
         TokenPair tokenPair = authService.login(request);
-        return ResponseEntity.ok(tokenPair);
+        return ResponseEntity.ok(new ApiResponse<>("Login successful", HttpStatus.OK, tokenPair));
     }
 
     @PostMapping("/refresh-token")
