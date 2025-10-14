@@ -16,8 +16,14 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductService {
     private final ProductRepository productRepository;
-// Get all products
-    public Page<Product> getAllProducts(String keyword, Integer page, Integer limit, String sort, String order) {
+
+    // Get all Products without pagination
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
+
+    // Get all Products with pagination, sorting, and searching
+    public Page<Product> getListProducts(String keyword, Integer page, Integer limit, String sort, String order) {
         Sort sortBy = "DESC".equalsIgnoreCase(order)
                 ? Sort.by(sort).descending()
                 : Sort.by(sort).ascending();
