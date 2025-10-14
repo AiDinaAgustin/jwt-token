@@ -162,10 +162,10 @@ public class ProductController {
     public ResponseEntity<?> importProductsFromWord(@RequestParam("file") MultipartFile file) {
         try {
             productService.importProductsFromWord(file);
-            return ResponseEntity.ok("Products imported successfully from Word file");
+            return ResponseEntity.ok(new ApiResponse<>("Products imported successfully", HttpStatus.OK));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to import products: " + e.getMessage());
+                    .body(new ApiResponse<>("Failed to import products: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
