@@ -4,6 +4,7 @@ import com.example.jwt_token.dto.ProductRequest;
 import com.example.jwt_token.model.Category;
 import com.example.jwt_token.model.Product;
 import com.example.jwt_token.response.ApiResponse;
+import com.example.jwt_token.response.PaginatedResult;
 import com.example.jwt_token.service.CategoryService;
 import com.example.jwt_token.service.ProductService;
 import jakarta.validation.Valid;
@@ -24,14 +25,17 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<?> getAllProducts(
-            @RequestParam("keyword")
-            String keyword,
+            @RequestParam("keyword") String keyword,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer limit,
             @RequestParam(defaultValue = "id") String sort,
             @RequestParam(defaultValue = "ASC") String order) {
+
         var products = productService.getAllProducts(keyword, page, limit, sort, order);
-        return ResponseEntity.ok(new ApiResponse<>("Products retrieved successfully", HttpStatus.OK, products));
+
+        PaginatedResult<?> paginated = new PaginatedResult<>(products);
+
+        return ResponseEntity.ok(new ApiResponse<>("Products retrieved successfully", HttpStatus.OK, paginated));
     }
 
     @GetMapping("/{id}")

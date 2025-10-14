@@ -4,6 +4,7 @@ import com.example.jwt_token.dto.ProductRequest;
 import com.example.jwt_token.model.Product;
 import com.example.jwt_token.repository.ProductRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -16,16 +17,17 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     // Get all products
-    public List<Product> getAllProducts(String keyword, Integer page, Integer limit, String sort, String order) {
+    public Page<Product> getAllProducts(String keyword, Integer page, Integer limit, String sort, String order) {
         Sort sortBy = "DESC".equalsIgnoreCase(order)
                 ? Sort.by(sort).descending()
                 : Sort.by(sort).ascending();
-        
+
         Pageable pageable = PageRequest.of(page, limit, sortBy);
+
         if (keyword != null && !keyword.isEmpty()) {
-            return productRepository.search(keyword, pageable).getContent();
+            return productRepository.search(keyword, pageable);
         }
-        return productRepository.findAll(pageable).getContent();
+        return productRepository.findAll(pageable);
     }
 
     // Get product by ID
