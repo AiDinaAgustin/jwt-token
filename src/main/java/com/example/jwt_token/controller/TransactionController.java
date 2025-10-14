@@ -1,15 +1,13 @@
 package com.example.jwt_token.controller;
 
+import com.example.jwt_token.dto.TransactionRequest;
 import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.response.PaginatedResult;
 import com.example.jwt_token.service.TransactionService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @AllArgsConstructor
@@ -37,5 +35,13 @@ public class TransactionController {
 
         PaginatedResult<?> paginated = new PaginatedResult<>(transactions);
         return ResponseEntity.ok(new ApiResponse<>("Transactions retrieved successfully", HttpStatus.OK, paginated));
+    }
+
+    // Create
+    @PostMapping
+    public ResponseEntity<?> createTransaction(@RequestBody TransactionRequest request){
+        var transaction = transactionService.createTransaction(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>("Transaction created successfully", HttpStatus.CREATED, transaction));
     }
 }

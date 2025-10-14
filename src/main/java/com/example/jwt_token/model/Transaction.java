@@ -1,10 +1,12 @@
 package com.example.jwt_token.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -30,4 +32,8 @@ public class Transaction {
 
     private Long createdAt;
     private Long updatedAt;
+
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"transaction"})
+    private List<TransactionDetails> transactionDetails;
 }
