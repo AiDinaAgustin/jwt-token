@@ -23,16 +23,17 @@ public class ProductService {
     }
 
     // Get all Products with pagination, sorting, and searching
-    public Page<Product> getListProducts(String keyword, Integer page, Integer limit, String sort, String order) {
+    public Page<Product> getListProducts(String keyword, Long categoryId, Integer page, Integer limit, String sort, String order) {
         Sort sortBy = "DESC".equalsIgnoreCase(order)
                 ? Sort.by(sort).descending()
                 : Sort.by(sort).ascending();
 
         Pageable pageable = PageRequest.of(page, limit, sortBy);
 
-        if (keyword != null && !keyword.isEmpty()) {
-            return productRepository.search(keyword, pageable);
+        if ((keyword != null && !keyword.isEmpty()) || categoryId != null) {
+            return productRepository.search(keyword, categoryId, pageable);
         }
+
         return productRepository.findAll(pageable);
     }
 

@@ -31,20 +31,21 @@ public class ProductController {
     }
 
     // Digunakan untuk List Producs menggunakan pagination
-    @GetMapping("/list")
-    public ResponseEntity<?> getListProducts(
-            @RequestParam("keyword") String keyword,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer limit,
-            @RequestParam(defaultValue = "id") String sort,
-            @RequestParam(defaultValue = "ASC") String order) {
+        @GetMapping("/list")
+        public ResponseEntity<?> getListProducts(
+                @RequestParam("keyword") String keyword,
+                @RequestParam(defaultValue = "0") Integer page,
+                @RequestParam(required = false) Long categoryId,
+                @RequestParam(defaultValue = "10") Integer limit,
+                @RequestParam(defaultValue = "id") String sort,
+                @RequestParam(defaultValue = "ASC") String order) {
 
-        var products = productService.getListProducts(keyword, page, limit, sort, order);
+            var products = productService.getListProducts(keyword, categoryId, page, limit, sort, order);
 
-        PaginatedResult<?> paginated = new PaginatedResult<>(products);
+            PaginatedResult<?> paginated = new PaginatedResult<>(products);
 
-        return ResponseEntity.ok(new ApiResponse<>("Products retrieved successfully", HttpStatus.OK, paginated));
-    }
+            return ResponseEntity.ok(new ApiResponse<>("Products retrieved successfully", HttpStatus.OK, paginated));
+        }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable Long id) {
