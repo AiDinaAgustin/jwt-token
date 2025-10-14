@@ -16,9 +16,9 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     // Get all products
-    public List<Product> getAllProducts(String keyword, Integer page, Integer size, String sortBy, Boolean ascending) {
-        Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+    public List<Product> getAllProducts(String keyword, Integer page, Integer limit, String sort, Boolean ascending) {
+        Sort sortBy = ascending ? Sort.by(sort).ascending() : Sort.by(sort).descending();
+        Pageable pageable = PageRequest.of(page, limit, sortBy);
         if (keyword != null && !keyword.isEmpty()) {
             return productRepository.search(keyword, pageable).getContent();
         }
