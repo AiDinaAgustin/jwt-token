@@ -37,6 +37,17 @@ public class TransactionController {
         return ResponseEntity.ok(new ApiResponse<>("Transactions retrieved successfully", HttpStatus.OK, paginated));
     }
 
+    // Get Transaction by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getTransactionById(@PathVariable Long id) {
+        var transaction = transactionService.getTransactionById(id);
+        if (transaction == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("Transaction not found", HttpStatus.NOT_FOUND));
+        }
+        return ResponseEntity.ok(new ApiResponse<>("Transaction retrieved successfully", HttpStatus.OK, transaction));
+    }
+
     // Create
     @PostMapping
     public ResponseEntity<?> createTransaction(@RequestBody TransactionRequest request){

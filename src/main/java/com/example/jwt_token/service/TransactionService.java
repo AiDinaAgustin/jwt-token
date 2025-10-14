@@ -82,6 +82,11 @@ public class TransactionService {
         return savedTransaction;
     }
 
+    // Get Transaction by ID
+    public Transaction getTransactionById(Long id) {
+        return transactionRepository.findById(id).orElse(null);
+    }
+
     // Generate unique transaction code
     private Long generateTransactionCode() {
         return 1000000L + (long) (Math.random() * 9000000L);
