@@ -23,6 +23,7 @@ public class ProductController {
     private final ProductService productService;
     private final CategoryService categoryService;
 
+    // Digunakan untuk List Producs menggunakan pagination
     @GetMapping
     public ResponseEntity<?> getAllProducts(
             @RequestParam("keyword") String keyword,

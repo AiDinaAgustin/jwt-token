@@ -17,15 +17,23 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
+    // Digunakan untuk List Categories tanpa pagination
     @GetMapping
-    public ResponseEntity<?> getAllcategories(
+    public ResponseEntity<?> getAllCategories() {
+        var categories = categoryService.getAllCategories();
+        return ResponseEntity.ok(new ApiResponse<>("Categories retrieved successfully", HttpStatus.OK, categories));
+    }
+
+    // Digunakan untuk List Categories menggunakan pagination
+    @GetMapping("/list")
+    public ResponseEntity<?> getListCategories(
             @Param("keyword") String keyword,
             @RequestParam(defaultValue= "0") Integer page,
             @RequestParam(defaultValue= "10") Integer limit,
             @RequestParam(defaultValue= "id") String sort,
             @RequestParam(defaultValue= "ASC") String order) {
 
-        var categories = categoryService.getAllCategories(keyword, page, limit, sort, order);
+        var categories = categoryService.getListCategories(keyword, page, limit, sort, order);
 
         PaginatedResult<?> paginated = new PaginatedResult<>(categories);
 

@@ -17,8 +17,13 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    // Get All Categories
-    public Page<Category> getAllCategories(String keyword, Integer page, Integer limit, String sort, String order) {
+    // Get all Categories without pagination
+    public List<Category> getAllCategories() {
+        return categoryRepository.findAll();
+    }
+
+    // Get all Categories with pagination, sorting, and searching
+    public Page<Category> getListCategories(String keyword, Integer page, Integer limit, String sort, String order) {
         Sort sortBy = "DESC".equalsIgnoreCase(order)
                 ? Sort.by(sort).descending()
                 : Sort.by(sort).ascending();
