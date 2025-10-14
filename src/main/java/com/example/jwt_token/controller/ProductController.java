@@ -9,11 +9,14 @@ import com.example.jwt_token.service.CategoryService;
 import com.example.jwt_token.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.ByteArrayInputStream;
 
 @RestController
 @RequestMapping("/api/products")
@@ -99,5 +102,19 @@ public class ProductController {
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok(new ApiResponse<>("Product deleted successfully", HttpStatus.OK));
+    }
+
+    @GetMapping("/export")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> exportProducts() {
+        try {
+            ByteArrayInputStream in = productService.exportProductsExcel();
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "attachment; filename=products.xlsx")
+                    .body(new InputStreamResource(in));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Failed to export products", HttpStatus.INTERNAL_SERVER_ERROR));
+        }
     }
 }
