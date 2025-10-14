@@ -1,7 +1,9 @@
 package com.example.jwt_token.service;
 
 import com.example.jwt_token.dto.ProductRequest;
+import com.example.jwt_token.model.Category;
 import com.example.jwt_token.model.Product;
+import com.example.jwt_token.repository.CategoryRepository;
 import com.example.jwt_token.repository.ProductRepository;
 import lombok.AllArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -11,16 +13,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Service
 @AllArgsConstructor
 public class ProductService {
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
     // Get all Products without pagination
     public List<Product> getAllProducts() {
@@ -125,5 +132,52 @@ public class ProductService {
         workbook.close();
 
         return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    // Import Excel
+    public void importProductsExcel(MultipartFile file) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Iterator<Row> rows = sheet.iterator();
+
+            if (!rows.hasNext()) {
+                throw new IOException("File Excel kosong");
+            }
+
+            // Lewati header
+            rows.next();
+
+            List<Product> products = new ArrayList<>();
+
+            while(rows.hasNext()) {
+                Row row = rows.next();
+                Product product = new Product();
+
+                // Asumsi kolom sesuai urutan: ID, Name, Slug, Price, Quantity, Category
+                if (row.getCell(1) == null || row.getCell(1).getStringCellValue().trim().isEmpty()) {
+                    continue; // Lewati baris jika nama kosong
+                }
+
+                product.setName(row.getCell(1).getStringCellValue());
+                product.setSlug(row.getCell(2) != null ? row.getCell(2).getStringCellValue() : null);
+                if (row.getCell(3) != null) {
+                    product.setPrice(BigDecimal.valueOf(row.getCell(3).getNumericCellValue()));
+                }
+
+                if (row.getCell(4) != null) {
+                    product.setQuantity((int) row.getCell(4).getNumericCellValue());
+                }
+
+                if (row.getCell(5) != null) {
+                    String categoryName = row.getCell(5).getStringCellValue();
+                    Category category = categoryRepository.findByName(categoryName).orElse(null);
+                    product.setCategory(category);
+                }
+
+                products.add(product);
+            }
+
+            productRepository.saveAll(products);
+        }
     }
 }

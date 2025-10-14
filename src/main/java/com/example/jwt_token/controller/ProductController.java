@@ -7,15 +7,22 @@ import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.response.PaginatedResult;
 import com.example.jwt_token.service.CategoryService;
 import com.example.jwt_token.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import io.swagger.v3.oas.annotations.parameters.RequestBody; // ← yang dari io.swagger!
 
 import java.io.ByteArrayInputStream;
 
@@ -105,6 +112,7 @@ public class ProductController {
         return ResponseEntity.ok(new ApiResponse<>("Product deleted successfully", HttpStatus.OK));
     }
 
+    // Export products to Excel
     @GetMapping("/export")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> exportProducts() {
@@ -122,4 +130,32 @@ public class ProductController {
                     .body(new ApiResponse<>("Failed to export products", HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
+
+
+    @PostMapping(
+            value = "/import",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    @PreAuthorize("hasRole('ADMIN')")
+    public  ResponseEntity<?> importProducts(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Please upload a valid Excel file", HttpStatus.BAD_REQUEST));
+        }
+
+       String filename = file.getOriginalFilename();
+        if (filename == null || !(filename.endsWith(".xls") || filename.endsWith(".xlsx"))) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Please upload a valid Excel file", HttpStatus.BAD_REQUEST));
+        }
+
+        try {
+            productService.importProductsExcel(file);
+            return ResponseEntity.ok(new ApiResponse<>("Products imported successfully", HttpStatus.OK));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Failed to import products: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
 }
