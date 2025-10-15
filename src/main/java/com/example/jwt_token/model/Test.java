@@ -1,8 +1,11 @@
 package com.example.jwt_token.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -31,4 +34,11 @@ public class Test {
     private Long createdAt;
     private Long updatedAt;
     private Long deteletedAt;
+
+    @OneToMany(mappedBy = "test",
+            fetch = FetchType.LAZY,
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    @JsonIgnoreProperties({"test"})
+    private List<QuestionSubtest> mst_question_subtests;
 }

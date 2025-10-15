@@ -1,6 +1,7 @@
 package com.example.jwt_token.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,11 +27,13 @@ public class QuestionSubtest {
     private Long createdAt;
     private Long updatedAt;
 
+    @JsonIgnoreProperties({"parent", "test", "children"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id") // foreign key mengarah ke id di tabel yang sama
     private QuestionSubtest parent;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"mst_question_subtests"})
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "test_id", referencedColumnName = "id")
     private Test test;
 }
