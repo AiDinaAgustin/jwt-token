@@ -25,8 +25,8 @@ public class OpenApiConfig {
                                         .description("Masukkan JWT token di sini (tanpa kata Bearer)")
                         ))
                 .info(new Info()
-                        .title("HR Payroll API Documentation")
+                        .title("API Documentation")
                         .version("1.0.0")
-                        .description("Dokumentasi API untuk sistem HR Payroll berbasis JWT dan microservices"));
+                        .description("Dokumentasi API untuk sistem e-commerce"));
     }
 }

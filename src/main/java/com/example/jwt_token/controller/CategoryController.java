@@ -27,7 +27,7 @@ public class CategoryController {
     // Digunakan untuk List Categories menggunakan pagination
     @GetMapping("/list")
     public ResponseEntity<?> getListCategories(
-            @Param("keyword") String keyword,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue= "0") Integer page,
             @RequestParam(defaultValue= "10") Integer limit,
             @RequestParam(defaultValue= "id") String sort,
