@@ -1,5 +1,6 @@
 package com.example.jwt_token.service;
 
+import com.example.jwt_token.dto.CategoryRequest;
 import com.example.jwt_token.model.Category;
 import com.example.jwt_token.repository.CategoryRepository;
 import lombok.AllArgsConstructor;
@@ -42,8 +43,25 @@ public class CategoryService {
     }
 
     // Create or Update Category
-    public Category saveCategory(Category category) {
+    public Category createCategory(CategoryRequest categoryRequest) {
+        Category category = new Category();
+
+        category.setName(categoryRequest.getName());
+        category.setSlug(categoryRequest.getSlug());
+        category.setDescription(categoryRequest.getDescription());
         return categoryRepository.save(category);
+    }
+
+    // Update Category
+    public Category updateCategory(Long id, CategoryRequest categoryRequest) {
+        Category category = categoryRepository.findById(id).orElse(null);
+        if (category != null) {
+            category.setName(categoryRequest.getName());
+            category.setSlug(categoryRequest.getSlug());
+            category.setDescription(categoryRequest.getDescription());
+            return categoryRepository.save(category);
+        }
+        return null;
     }
 
     // Delete Category by ID

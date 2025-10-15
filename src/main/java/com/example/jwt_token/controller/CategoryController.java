@@ -1,9 +1,11 @@
 package com.example.jwt_token.controller;
 
+import com.example.jwt_token.dto.CategoryRequest;
 import com.example.jwt_token.model.Category;
 import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.response.PaginatedResult;
 import com.example.jwt_token.service.CategoryService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
@@ -51,22 +53,21 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createCategory(@RequestBody Category category) {
-        var savedCategory = categoryService.saveCategory(category);
+    public ResponseEntity<?> createCategory(@Valid @RequestBody CategoryRequest categoryRequest) {
+        var createdCategory = categoryService.createCategory(categoryRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>("Category created successfully", HttpStatus.CREATED, savedCategory));
+                .body(new ApiResponse<>("Category created successfully", HttpStatus.CREATED, createdCategory));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCategory(@PathVariable Long id, @RequestBody Category category) {
+    public ResponseEntity<?> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequest categoryRequest) {
         var existingCategory = categoryService.getCategoryById(id);
         if (existingCategory == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("Category not found", HttpStatus.NOT_FOUND));
         }
-        existingCategory.setName(category.getName());
-        var updatedCategory = categoryService.saveCategory(existingCategory);
-        return ResponseEntity.ok(new ApiResponse<>("Category updated successfully", HttpStatus.OK, updatedCategory
-        ));
+        var updatedCategory = categoryService.updateCategory(id, categoryRequest);
+        return ResponseEntity.ok(new ApiResponse<>("Category updated successfully", HttpStatus.OK, updatedCategory));
     }
 
     @DeleteMapping("/{id}")
