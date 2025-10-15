@@ -1,5 +1,6 @@
 package com.example.jwt_token.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,6 +34,7 @@ public class Question {
     @Column(nullable = false)
     private String sub_jenis_test;
 
+    @JsonIgnoreProperties({"mst_questions"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subtest_id", referencedColumnName = "id")
     private QuestionSubtest questionSubtest;
