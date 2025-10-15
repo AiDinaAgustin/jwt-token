@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "mst_question_subtests")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class QuestionSubtest {
 
     @Id
@@ -28,7 +29,7 @@ public class QuestionSubtest {
     private Long updatedAt;
 
     @JsonIgnoreProperties({"parent", "test", "children"})
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id") // foreign key mengarah ke id di tabel yang sama
     private QuestionSubtest parent;
 
