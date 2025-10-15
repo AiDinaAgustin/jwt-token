@@ -70,39 +70,37 @@ public class ProductController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductRequest product) {
-        if (product.getCategory() != null && product.getCategory().getId() != null) {
-            Category category = categoryService.getCategoryById(product.getCategory().getId());
-            if (category == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>("Invalid category ID", HttpStatus.BAD_REQUEST));
-            }
-            product.setCategory(category);
-        } else {
+    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductRequest productRequest) {
+        try {
+            Product savedProduct = productService.createProduct(productRequest);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse<>("Product created successfully", HttpStatus.CREATED, savedProduct));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("Category is required", HttpStatus.BAD_REQUEST));
+                    .body(new ApiResponse<>(e.getMessage(), HttpStatus.BAD_REQUEST, null));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Failed to create product", HttpStatus.INTERNAL_SERVER_ERROR, null));
         }
-        var savedProduct = productService.saveProduct(product);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>("Product created successfully", HttpStatus.CREATED, savedProduct));
     }
-
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest product) {
-        if (product.getCategory() != null && product.getCategory().getId() != null) {
-            Category category = categoryService.getCategoryById(product.getCategory().getId());
-            if (category == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>("Invalid category ID", HttpStatus.BAD_REQUEST));
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest productRequest) {
+        try {
+            Product updatedProduct = productService.updateProduct(id, productRequest);
+            if (updatedProduct == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>("Product not found", HttpStatus.NOT_FOUND));
             }
-            product.setCategory(category);
-        } else {
+            return ResponseEntity.ok(new ApiResponse<>("Product updated successfully", HttpStatus.OK, updatedProduct));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("Category is required", HttpStatus.BAD_REQUEST));
+                    .body(new ApiResponse<>(e.getMessage(), HttpStatus.BAD_REQUEST));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Failed to update product", HttpStatus.INTERNAL_SERVER_ERROR));
         }
-        var updatedProduct = productService.updateProduct(id, product);
-        return ResponseEntity.ok(new ApiResponse<>("Product updated successfully", HttpStatus.OK, updatedProduct));
     }
 
     @DeleteMapping("/{id}")

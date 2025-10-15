@@ -11,10 +11,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class ProductRequest {
 
     @NotBlank(message = "Name is required")
@@ -32,5 +34,5 @@ public class ProductRequest {
     private Integer quantity;
 
     @NotNull(message = "Category is required")
-    private Category category;
+    private Long categoryId;
 }

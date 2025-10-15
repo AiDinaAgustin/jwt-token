@@ -33,7 +33,10 @@ public class Transaction {
     private Long createdAt;
     private Long updatedAt;
 
-    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "transaction",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"transaction"})
     private List<TransactionDetails> transactionDetails;
 }

@@ -33,6 +33,7 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     // Get all Products without pagination
     public List<Product> getAllProducts() {
@@ -59,25 +60,37 @@ public class ProductService {
         return productRepository.findById(id).orElse(null);
     }
 
-    // Save/New a new product
-    public Product saveProduct(ProductRequest productRequest) {
+    public Product createProduct(ProductRequest productRequest) {
+        Category category = categoryService.getCategoryById(productRequest.getCategoryId());
+        if (category == null) {
+            throw new IllegalArgumentException("Invalid category ID: " + productRequest.getCategoryId());
+        }
+
+        // Buat objek Product dari data request
         Product product = new Product();
         product.setName(productRequest.getName());
         product.setSlug(productRequest.getSlug());
         product.setPrice(productRequest.getPrice());
         product.setQuantity(productRequest.getQuantity());
-        product.setCategory(productRequest.getCategory());
+        product.setCategory(category);
+
+        // Simpan ke database
         return productRepository.save(product);
     }
 
-    // Update an existing product
+    // Update a product by ID
     public Product updateProduct(Long id, ProductRequest productRequest) {
         return productRepository.findById(id).map(existingProduct -> {
+            Category category = categoryService.getCategoryById(productRequest.getCategoryId());
+            if (category == null) {
+                throw new IllegalArgumentException("Invalid category ID: " + productRequest.getCategoryId());
+            }
+
             existingProduct.setName(productRequest.getName());
             existingProduct.setSlug(productRequest.getSlug());
             existingProduct.setPrice(productRequest.getPrice());
             existingProduct.setQuantity(productRequest.getQuantity());
-            existingProduct.setCategory(productRequest.getCategory());
+            existingProduct.setCategory(category);
             return productRepository.save(existingProduct);
         }).orElse(null);
     }
