@@ -24,4 +24,6 @@ public class TestRequest {
 
     @NotNull(message = "Keterangan is required")
     private String keterangan;
+
+    private Boolean israndomquestion;
 }

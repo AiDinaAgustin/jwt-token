@@ -78,8 +78,8 @@ public class TestController {
     public ResponseEntity<?> createTestAndImport(
             @RequestParam("name") String name,
             @RequestParam("durasi") Long durasi,
-            @RequestParam("jumlah_soal") Long jumlah_soal,
             @RequestParam("keterangan") String keterangan,
+            @RequestParam("israndomquestion") boolean isRandomQuestion,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "isRandomAnswer", defaultValue = "false") boolean isRandomAnswer
     ) {
@@ -88,13 +88,20 @@ public class TestController {
             TestRequest testRequest = new TestRequest();
             testRequest.setName(name);
             testRequest.setDurasi(durasi);
-            testRequest.setJumlah_soal(jumlah_soal);
+            testRequest.setJumlah_soal(0L);
             testRequest.setKeterangan(keterangan);
+            testRequest.setIsrandomquestion(isRandomQuestion);
 
             Test test = testService.createTest(testRequest);
 
             // Import soal dari file Word
             var result = testService.importFromWord(file, test.getId(), isRandomAnswer);
+
+            // Ambil jumlah soal dari hasil import
+            Long jumlahSoal = Long.valueOf(result.get("questions_imported").toString());
+            test.setJumlah_soal(jumlahSoal);
+
+            testService.updateTest(test);
 
             // Response sukses
             return ResponseEntity.ok(Map.of(

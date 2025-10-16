@@ -47,7 +47,7 @@ public class TestService {
         test.setDurasi(testRequest.getDurasi());
         test.setJumlah_soal(testRequest.getJumlah_soal());
         test.setKeterangan(testRequest.getKeterangan());
-        test.setIsrandomquestion(false);
+        test.setIsrandomquestion(testRequest.getIsrandomquestion());
         test.setCreatedAt(Instant.now().toEpochMilli());
         test.setUpdatedAt(Instant.now().toEpochMilli());
         return testRepository.save(test);
@@ -61,6 +61,7 @@ public class TestService {
             existingTest.setDurasi(testRequest.getDurasi());
             existingTest.setJumlah_soal(testRequest.getJumlah_soal());
             existingTest.setKeterangan(testRequest.getKeterangan());
+            existingTest.setIsrandomquestion(testRequest.getIsrandomquestion());
             existingTest.setUpdatedAt(Instant.now().toEpochMilli());
             return testRepository.save(existingTest);
         }
@@ -186,5 +187,10 @@ public class TestService {
                 "questions_imported", questionCount,
                 "answers_imported", answerCount
         );
+    }
+
+    public Test updateTest(Test test) {
+        test.setUpdatedAt(System.currentTimeMillis());
+        return testRepository.save(test);
     }
 }
