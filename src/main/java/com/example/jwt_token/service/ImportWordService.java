@@ -41,11 +41,11 @@ public class ImportWordService {
                 if (text.isEmpty()) continue;
 
                 // SUBTEST
-                if (text.startsWith("Subtest:")) {
+                if (text.startsWith("SUB_TEST:")) {
                     currentParentSubtest = new QuestionSubtest();
 
                     // deteksi jenis soal (contoh: [ESSAY] atau [PILIHAN GANDA])
-                    String namaSubtest = text.replace("Subtest:", "").trim();
+                    String namaSubtest = text.replace("SUB_TEST:", "").trim();
                     String jenis = "PILIHAN GANDA"; // default
 
                     if (namaSubtest.contains("[")) {
@@ -71,13 +71,13 @@ public class ImportWordService {
                 }
 
                 // BAGIAN SOAL
-                else if (text.startsWith("Bagian Soal:")) {
+                else if (text.startsWith("BAGIAN_SOAL:")) {
                     if (currentParentSubtest == null) {
                         throw new RuntimeException("Bagian Soal ditemukan sebelum Subtest!");
                     }
 
                     currentBagian = new QuestionSubtest();
-                    currentBagian.setNama(text.replace("Bagian Soal:", "").trim());
+                    currentBagian.setNama(text.replace("BAGIAN_SOAL:", "").trim());
                     currentBagian.setDeskripsi("Imported from Word");
                     currentBagian.setIsbagian(true);
                     currentBagian.setTest(test);
