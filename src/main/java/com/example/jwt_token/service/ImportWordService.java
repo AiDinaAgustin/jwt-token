@@ -31,9 +31,10 @@ public class ImportWordService {
             XWPFDocument document = new XWPFDocument(is);
             List<XWPFParagraph> paragraphs = document.getParagraphs();
 
-            QuestionSubtest currentSubtest = null; // parent subtest
+            QuestionSubtest currentParentSubtest = null;
             QuestionSubtest currentBagian = null;
             Question currentQuestion = null;
+            String currentJenis = "PILIHAN GANDA"; // default
 
             for (XWPFParagraph p : paragraphs) {
                 String text = p.getText().trim();
@@ -41,34 +42,46 @@ public class ImportWordService {
 
                 // SUBTEST
                 if (text.startsWith("Subtest:")) {
-                    String subtestName = text.replace("Subtest:", "").trim();
+                    currentParentSubtest = new QuestionSubtest();
 
-                    currentSubtest = new QuestionSubtest();
-                    currentSubtest.setNama(subtestName);
-                    currentSubtest.setDeskripsi("Imported from Word");
-                    currentSubtest.setIsbagian(false);
-                    currentSubtest.setTest(test);
-                    currentSubtest.setCreatedAt(System.currentTimeMillis());
-                    subtestRepository.save(currentSubtest);
+                    // deteksi jenis soal (contoh: [ESSAY] atau [PILIHAN GANDA])
+                    String namaSubtest = text.replace("Subtest:", "").trim();
+                    String jenis = "PILIHAN GANDA"; // default
 
-                    // reset bagian & question
+                    if (namaSubtest.contains("[")) {
+                        int start = namaSubtest.indexOf("[");
+                        int end = namaSubtest.indexOf("]");
+                        if (start != -1 && end != -1) {
+                            jenis = namaSubtest.substring(start + 1, end).trim().toUpperCase();
+                            namaSubtest = namaSubtest.substring(0, start).trim();
+                        }
+                    }
+
+                    currentJenis = jenis; // simpan untuk semua pertanyaan di subtest ini
+
+                    currentParentSubtest.setNama(namaSubtest);
+                    currentParentSubtest.setDeskripsi("Imported from Word");
+                    currentParentSubtest.setIsbagian(false);
+                    currentParentSubtest.setTest(test);
+                    currentParentSubtest.setCreatedAt(System.currentTimeMillis());
+                    subtestRepository.save(currentParentSubtest);
+
                     currentBagian = null;
                     currentQuestion = null;
                 }
 
                 // BAGIAN SOAL
                 else if (text.startsWith("Bagian Soal:")) {
-                    if (currentSubtest == null)
+                    if (currentParentSubtest == null) {
                         throw new RuntimeException("Bagian Soal ditemukan sebelum Subtest!");
-
-                    String bagianName = text.replace("Bagian Soal:", "").trim();
+                    }
 
                     currentBagian = new QuestionSubtest();
-                    currentBagian.setNama(bagianName);
-                    currentBagian.setDeskripsi("Bagian dari subtest: " + currentSubtest.getNama());
+                    currentBagian.setNama(text.replace("Bagian Soal:", "").trim());
+                    currentBagian.setDeskripsi("Imported from Word");
                     currentBagian.setIsbagian(true);
-                    currentBagian.setParent(currentSubtest);
                     currentBagian.setTest(test);
+                    currentBagian.setParent(currentParentSubtest);
                     currentBagian.setCreatedAt(System.currentTimeMillis());
                     subtestRepository.save(currentBagian);
 
@@ -77,13 +90,14 @@ public class ImportWordService {
 
                 // QUESTION
                 else if (text.startsWith("Q:")) {
-                    if (currentBagian == null)
+                    if (currentBagian == null) {
                         throw new RuntimeException("Pertanyaan ditemukan sebelum Bagian Soal!");
+                    }
 
                     currentQuestion = new Question();
                     currentQuestion.setPertanyaan(text.replace("Q:", "").trim());
                     currentQuestion.setRingkasan("-");
-                    currentQuestion.setJenis("PILIHAN GANDA");
+                    currentQuestion.setJenis(currentJenis); // ambil jenis dari subtest parent
                     currentQuestion.setIsrandomanswer(false);
                     currentQuestion.setSub_jenis_test(currentBagian.getParent().getNama());
                     currentQuestion.setQuestionSubtest(currentBagian);
@@ -91,21 +105,25 @@ public class ImportWordService {
                     questionRepository.save(currentQuestion);
                 }
 
-                // ANSWER (A:, B:, C:, D:)
+                // ANSWER (hanya berlaku untuk PILIHAN GANDA)
                 else if (text.matches("^[A-Da-d]\\..*")) {
-                    if (currentQuestion == null)
+                    if (currentQuestion == null) {
                         throw new RuntimeException("Jawaban ditemukan sebelum Pertanyaan!");
+                    }
 
-                    boolean isCorrect = text.contains("*");
-                    String answerText = text.replace("*", "").trim();
+                    // hanya buat jawaban jika jenis = PILIHAN GANDA
+                    if (currentJenis.equalsIgnoreCase("PILIHAN GANDA")) {
+                        boolean isCorrect = text.contains("*");
+                        String answerText = text.replace("*", "").trim();
 
-                    Answer answer = new Answer();
-                    answer.setTeks(answerText);
-                    answer.setBobot(1L);
-                    answer.setIsanswer(isCorrect);
-                    answer.setQuestion(currentQuestion);
-                    answer.setCreatedAt(System.currentTimeMillis());
-                    answerRepository.save(answer);
+                        Answer answer = new Answer();
+                        answer.setTeks(answerText);
+                        answer.setBobot(1L);
+                        answer.setIsanswer(isCorrect);
+                        answer.setQuestion(currentQuestion);
+                        answer.setCreatedAt(System.currentTimeMillis());
+                        answerRepository.save(answer);
+                    }
                 }
             }
         }
