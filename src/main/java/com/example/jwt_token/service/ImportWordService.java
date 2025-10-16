@@ -31,15 +31,15 @@ public class ImportWordService {
             XWPFDocument document = new XWPFDocument(is);
             List<XWPFParagraph> paragraphs = document.getParagraphs();
 
-            QuestionSubtest currentSubtest = null; // contoh: "Logika Penalaran"
-            QuestionSubtest currentBagian = null; // contoh: "Deret"
+            QuestionSubtest currentSubtest = null; // parent subtest
+            QuestionSubtest currentBagian = null;
             Question currentQuestion = null;
 
             for (XWPFParagraph p : paragraphs) {
                 String text = p.getText().trim();
                 if (text.isEmpty()) continue;
 
-                // ========== SUBTEST ==========
+                // SUBTEST
                 if (text.startsWith("Subtest:")) {
                     String subtestName = text.replace("Subtest:", "").trim();
 
@@ -56,7 +56,7 @@ public class ImportWordService {
                     currentQuestion = null;
                 }
 
-                // ========== BAGIAN SOAL ==========
+                // BAGIAN SOAL
                 else if (text.startsWith("Bagian Soal:")) {
                     if (currentSubtest == null)
                         throw new RuntimeException("Bagian Soal ditemukan sebelum Subtest!");
@@ -75,7 +75,7 @@ public class ImportWordService {
                     currentQuestion = null;
                 }
 
-                // ========== QUESTION ==========
+                // QUESTION
                 else if (text.startsWith("Q:")) {
                     if (currentBagian == null)
                         throw new RuntimeException("Pertanyaan ditemukan sebelum Bagian Soal!");
@@ -85,13 +85,13 @@ public class ImportWordService {
                     currentQuestion.setRingkasan("-");
                     currentQuestion.setJenis("PILIHAN GANDA");
                     currentQuestion.setIsrandomanswer(false);
-                    currentQuestion.setSub_jenis_test("umum");
+                    currentQuestion.setSub_jenis_test(currentBagian.getParent().getNama());
                     currentQuestion.setQuestionSubtest(currentBagian);
                     currentQuestion.setCreatedAt(System.currentTimeMillis());
                     questionRepository.save(currentQuestion);
                 }
 
-                // ========== ANSWER (A:, B:, C:, D:) ==========
+                // ANSWER (A:, B:, C:, D:)
                 else if (text.matches("^[A-Da-d]\\..*")) {
                     if (currentQuestion == null)
                         throw new RuntimeException("Jawaban ditemukan sebelum Pertanyaan!");
