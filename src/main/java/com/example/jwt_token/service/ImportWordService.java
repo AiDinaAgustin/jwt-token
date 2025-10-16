@@ -19,7 +19,7 @@ public class ImportWordService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
 
-    public void importFromWord(MultipartFile file, Long testId) throws Exception {
+    public void importFromWord(MultipartFile file, Long testId, boolean isRandomAnswer) throws Exception {
         Optional<Test> testOpt = testRepository.findById(testId);
         if (testOpt.isEmpty()) {
             throw new RuntimeException("Test ID tidak ditemukan");
@@ -98,7 +98,11 @@ public class ImportWordService {
                     currentQuestion.setPertanyaan(text.replace("Q:", "").trim());
                     currentQuestion.setRingkasan("-");
                     currentQuestion.setJenis(currentJenis); // ambil jenis dari subtest parent
-                    currentQuestion.setIsrandomanswer(false);
+                    if (currentQuestion != null && currentQuestion.getJenis().equals("PILIHAN GANDA")) {
+                        currentQuestion.setIsrandomanswer(isRandomAnswer);
+                    } else {
+                        currentQuestion.setIsrandomanswer(false);
+                    }
                     currentQuestion.setSub_jenis_test(currentBagian.getParent().getNama());
                     currentQuestion.setQuestionSubtest(currentBagian);
                     currentQuestion.setCreatedAt(System.currentTimeMillis());

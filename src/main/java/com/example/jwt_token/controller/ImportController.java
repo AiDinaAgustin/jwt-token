@@ -19,10 +19,11 @@ public class ImportController {
     )
     public ResponseEntity<?> importWord(
             @PathVariable Long testId,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(defaultValue = "false") boolean isRandomAnswer
     ) {
         try {
-            importWordService.importFromWord(file, testId);
+            importWordService.importFromWord(file, testId, isRandomAnswer);
             return ResponseEntity.ok("Import berhasil untuk Test ID: " + testId);
         } catch (Exception e) {
             e.printStackTrace();
