@@ -2,13 +2,19 @@ package com.example.jwt_token.controller;
 
 
 import com.example.jwt_token.dto.TestRequest;
+import com.example.jwt_token.model.Test;
 import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.service.TestService;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @AllArgsConstructor
@@ -63,5 +69,47 @@ public class TestController {
                     .body(new ApiResponse<>("Test not found", HttpStatus.NOT_FOUND));
         }
         return ResponseEntity.ok(new ApiResponse<>("Test deleted successfully", HttpStatus.OK));
+    }
+
+    @PostMapping(value = "/import",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    @Transactional // rollback otomatis jika gagal
+    public ResponseEntity<?> createTestAndImport(
+            @RequestParam("name") String name,
+            @RequestParam("durasi") Long durasi,
+            @RequestParam("jumlah_soal") Long jumlah_soal,
+            @RequestParam("keterangan") String keterangan,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "isRandomAnswer", defaultValue = "false") boolean isRandomAnswer
+    ) {
+        try {
+            // 1️Buat test baru
+            TestRequest testRequest = new TestRequest();
+            testRequest.setName(name);
+            testRequest.setDurasi(durasi);
+            testRequest.setJumlah_soal(jumlah_soal);
+            testRequest.setKeterangan(keterangan);
+
+            Test test = testService.createTest(testRequest);
+
+            // Import soal dari file Word
+            var result = testService.importFromWord(file, test.getId(), isRandomAnswer);
+
+            // Response sukses
+            return ResponseEntity.ok(Map.of(
+                    "message", "Test dan soal berhasil diimport!",
+                    "testId", test.getId(),
+                    "result", result
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // rollback otomatis karena @Transactional
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Gagal membuat test atau import soal",
+                    "detail", e.getMessage()
+            ));
+        }
     }
 }
