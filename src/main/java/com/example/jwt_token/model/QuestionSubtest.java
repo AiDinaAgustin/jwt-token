@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
+
+import java.awt.*;
 
 @Data
 @NoArgsConstructor
@@ -37,4 +40,10 @@ public class QuestionSubtest {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "test_id", referencedColumnName = "id")
     private Test test;
+
+    // Relasi baru: satu subtest punya banyak question
+    @OneToMany(mappedBy = "questionSubtest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("questionSubtest")
+    private List<Question> questions;
+
 }

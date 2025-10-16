@@ -24,6 +24,17 @@ public class TestController {
         return ResponseEntity.ok(new ApiResponse<>("Tests retrieved successfully", HttpStatus.OK, tests));
     }
 
+    // Get test by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getTestById(@PathVariable Long id) {
+        var test = testService.getTestById(id);
+        if (test == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("Test not found", HttpStatus.NOT_FOUND));
+        }
+        return ResponseEntity.ok(new ApiResponse<>("Test retrieved successfully", HttpStatus.OK, test));
+    }
+
     // Create a new test
     @PostMapping
     public ResponseEntity<?> createTests(@Valid @RequestBody TestRequest testRequest) {
