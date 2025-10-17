@@ -32,6 +32,8 @@ public class SeleksiService {
         seleksi.setNama(seleksiRequest.getNama());
         seleksi.setStatus(seleksiRequest.getStatus());
         seleksi.setJenis_peserta(seleksiRequest.getJenis_peserta());
+        seleksi.setSekolahid(seleksiRequest.getSekolahid());
+        seleksi.setAngkatanid(seleksiRequest.getAngkatanid());
         seleksi.setTanggal_mulai(seleksiRequest.getTanggal_mulai());
         seleksi.setTanggal_selesai(seleksiRequest.getTanggal_selesai());
         seleksi.setKeterangan(seleksiRequest.getKeterangan());
@@ -47,6 +49,8 @@ public class SeleksiService {
             seleksi.setNama(seleksiRequest.getNama());
             seleksi.setStatus(seleksiRequest.getStatus());
             seleksi.setJenis_peserta(seleksiRequest.getJenis_peserta());
+            seleksi.setSekolahid(seleksiRequest.getSekolahid());
+            seleksi.setAngkatanid(seleksiRequest.getAngkatanid());
             seleksi.setTanggal_mulai(seleksiRequest.getTanggal_mulai());
             seleksi.setTanggal_selesai(seleksiRequest.getTanggal_selesai());
             seleksi.setKeterangan(seleksiRequest.getKeterangan());
