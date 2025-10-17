@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -37,6 +38,10 @@ public class Seleksi {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "angkatanid", referencedColumnName = "id")
     private Angkatan angkatan;
+
+    @OneToMany(mappedBy = "seleksi", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties("seleksi")
+    private List<TrxSeleksiTests> trxSeleksiTests;
 
     @NotNull
     private String jenis_peserta;

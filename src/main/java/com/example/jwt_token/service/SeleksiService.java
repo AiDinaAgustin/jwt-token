@@ -1,10 +1,10 @@
 package com.example.jwt_token.service;
 
 import com.example.jwt_token.dto.SeleksiRequest;
-import com.example.jwt_token.model.Angkatan;
-import com.example.jwt_token.model.Sekolah;
-import com.example.jwt_token.model.Seleksi;
+import com.example.jwt_token.dto.TrxSeleksiTestRequest;
+import com.example.jwt_token.model.*;
 import com.example.jwt_token.repository.SeleksiRepository;
+import com.example.jwt_token.repository.TrxSeleksiTestRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +18,8 @@ public class SeleksiService {
     private final SeleksiRepository seleksiRepository;
     private final SekolahService sekolahService;
     private final AngkatanService angkatanService;
+    private final TrxSeleksiTestRepository trxSeleksiTestRepository;
+    private final TestService testService;
 
     // Get All Seleksi
     public List<Seleksi> getAllSeleksi() {
@@ -29,6 +31,24 @@ public class SeleksiService {
         return seleksiRepository.findById(id).orElse(null);
     }
 
+    // Apply test by seleksi
+    public TrxSeleksiTests applyTestBySeleksi(Long id, TrxSeleksiTestRequest trxSeleksiTestRequest) {
+        Seleksi seleksi = getSeleksiById(id);
+        if (seleksi == null) {
+            throw new IllegalArgumentException("Seleksi dengan ID " + id + " tidak ditemukan.");
+        }
+
+        Test test = testService.getTestById(trxSeleksiTestRequest.getTestid());
+        if (test == null) {
+            throw new IllegalArgumentException("Test dengan ID " + trxSeleksiTestRequest.getTestid() + " tidak ditemukan.");
+        }
+
+        TrxSeleksiTests trxSeleksiTests = new TrxSeleksiTests();
+        trxSeleksiTests.setSeleksi(seleksi);
+        trxSeleksiTests.setTest(test);
+        trxSeleksiTests.setCreatedAt(Instant.now().toEpochMilli());
+        return trxSeleksiTestRepository.save(trxSeleksiTests);
+    }
 
     // Create Seleksi
     public Seleksi createSeleksi(SeleksiRequest seleksiRequest) {

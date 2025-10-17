@@ -1,6 +1,7 @@
 package com.example.jwt_token.controller;
 
 import com.example.jwt_token.dto.SeleksiRequest;
+import com.example.jwt_token.dto.TrxSeleksiTestRequest;
 import com.example.jwt_token.response.ApiResponse;
 import com.example.jwt_token.service.SeleksiService;
 import jakarta.validation.Valid;
@@ -64,5 +65,28 @@ public class SeleksiController {
                     .body(new ApiResponse<>("Seleksi not found", HttpStatus.NOT_FOUND));
         }
         return ResponseEntity.ok(new ApiResponse<>("Seleksi deleted successfully", HttpStatus.OK));
+    }
+
+    // Append Tests to Seleksi
+    @PostMapping("/{id}/apply-test")
+    public ResponseEntity<?> applyTestBySeleksi(
+            @PathVariable Long id,
+            @RequestBody TrxSeleksiTestRequest trxSeleksiTestRequest
+            ) {
+        try {
+            var updatedSeleksi = seleksiService.applyTestBySeleksi(id, trxSeleksiTestRequest);
+            if (updatedSeleksi == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>("Seleksi not found", HttpStatus.NOT_FOUND));
+            }
+            return ResponseEntity.ok(new ApiResponse<>("Tests applied to Seleksi successfully", HttpStatus.OK, updatedSeleksi));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(e.getMessage(), HttpStatus.BAD_REQUEST));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Failed to apply tests to Seleksi", HttpStatus.INTERNAL_SERVER_ERROR));
+        }
     }
 }
