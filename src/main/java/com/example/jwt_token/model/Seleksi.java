@@ -1,5 +1,6 @@
 package com.example.jwt_token.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -29,9 +30,13 @@ public class Seleksi {
     @Size(min = 2, max = 100)
     private String status;
 
-    private Long sekolahid;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "sekolahid", referencedColumnName = "id")
+    private Sekolah sekolah;
 
-    private Long angkatanid;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "angkatanid", referencedColumnName = "id")
+    private Angkatan angkatan;
 
     @NotNull
     private String jenis_peserta;

@@ -1,6 +1,8 @@
 package com.example.jwt_token.service;
 
 import com.example.jwt_token.dto.SeleksiRequest;
+import com.example.jwt_token.model.Angkatan;
+import com.example.jwt_token.model.Sekolah;
 import com.example.jwt_token.model.Seleksi;
 import com.example.jwt_token.repository.SeleksiRepository;
 import lombok.AllArgsConstructor;
@@ -14,6 +16,8 @@ import java.util.List;
 public class SeleksiService {
 
     private final SeleksiRepository seleksiRepository;
+    private final SekolahService sekolahService;
+    private final AngkatanService angkatanService;
 
     // Get All Seleksi
     public List<Seleksi> getAllSeleksi() {
@@ -28,12 +32,22 @@ public class SeleksiService {
 
     // Create Seleksi
     public Seleksi createSeleksi(SeleksiRequest seleksiRequest) {
+        Sekolah sekolah = sekolahService.getSekolahById(seleksiRequest.getSekolahid());
+        if (sekolah == null) {
+            throw new IllegalArgumentException("Sekolah dengan ID " + seleksiRequest.getSekolahid() + " tidak ditemukan.");
+        }
+
+        Angkatan angkatan = angkatanService.getAngkatanById(seleksiRequest.getAngkatanid());
+        if (angkatan == null) {
+            throw new IllegalArgumentException("Angkatan dengan ID " + seleksiRequest.getAngkatanid() + " tidak ditemukan.");
+        }
+
         Seleksi seleksi = new Seleksi();
         seleksi.setNama(seleksiRequest.getNama());
         seleksi.setStatus(seleksiRequest.getStatus());
         seleksi.setJenis_peserta(seleksiRequest.getJenis_peserta());
-        seleksi.setSekolahid(seleksiRequest.getSekolahid());
-        seleksi.setAngkatanid(seleksiRequest.getAngkatanid());
+        seleksi.setSekolah(sekolah);
+        seleksi.setAngkatan(angkatan);
         seleksi.setTanggal_mulai(seleksiRequest.getTanggal_mulai());
         seleksi.setTanggal_selesai(seleksiRequest.getTanggal_selesai());
         seleksi.setKeterangan(seleksiRequest.getKeterangan());
@@ -43,21 +57,28 @@ public class SeleksiService {
 
     // Update Seleksi
     public Seleksi updateSeleksi(Long id, SeleksiRequest seleksiRequest) {
-        Seleksi seleksi = seleksiRepository.findById(id).orElse(null);
+        return seleksiRepository.findById(id).map(existingSeleksi -> {
+            Sekolah sekolah = sekolahService.getSekolahById(seleksiRequest.getSekolahid());
+            if (sekolah == null) {
+                throw new IllegalArgumentException("Sekolah dengan ID " + seleksiRequest.getSekolahid() + " tidak ditemukan.");
+            }
 
-        if(seleksi != null) {
-            seleksi.setNama(seleksiRequest.getNama());
-            seleksi.setStatus(seleksiRequest.getStatus());
-            seleksi.setJenis_peserta(seleksiRequest.getJenis_peserta());
-            seleksi.setSekolahid(seleksiRequest.getSekolahid());
-            seleksi.setAngkatanid(seleksiRequest.getAngkatanid());
-            seleksi.setTanggal_mulai(seleksiRequest.getTanggal_mulai());
-            seleksi.setTanggal_selesai(seleksiRequest.getTanggal_selesai());
-            seleksi.setKeterangan(seleksiRequest.getKeterangan());
-            seleksi.setUpdated_at(Instant.now().toEpochMilli());
-            return seleksiRepository.save(seleksi);
-        }
-        return null;
+            Angkatan angkatan = angkatanService.getAngkatanById(seleksiRequest.getAngkatanid());
+            if (angkatan == null) {
+                throw new IllegalArgumentException("Angkatan dengan ID " + seleksiRequest.getAngkatanid() + " tidak ditemukan.");
+            }
+
+            existingSeleksi.setNama(seleksiRequest.getNama());
+            existingSeleksi.setStatus(seleksiRequest.getStatus());
+            existingSeleksi.setJenis_peserta(seleksiRequest.getJenis_peserta());
+            existingSeleksi.setSekolah(sekolah);
+            existingSeleksi.setAngkatan(angkatan);
+            existingSeleksi.setTanggal_mulai(seleksiRequest.getTanggal_mulai());
+            existingSeleksi.setTanggal_selesai(seleksiRequest.getTanggal_selesai());
+            existingSeleksi.setKeterangan(seleksiRequest.getKeterangan());
+            existingSeleksi.setUpdated_at(Instant.now().toEpochMilli());
+            return seleksiRepository.save(existingSeleksi);
+        }).orElse(null);
     }
 
     // Delete Seleksi
