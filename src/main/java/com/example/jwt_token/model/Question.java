@@ -28,6 +28,8 @@ public class Question {
 
     private Boolean israndomanswer;
 
+    private String img_url;
+
     private Long createdAt;
     private Long updatedAt;
 

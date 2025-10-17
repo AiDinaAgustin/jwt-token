@@ -14,12 +14,12 @@ import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -29,6 +29,8 @@ public class TestService {
     private final QuestionSubtestRepository subtestRepository;
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
+
+    private final String UPLOAD_DIR = "uploads/questions/";
 
     // Get All Test
     public List<Test> getAllTests() {
@@ -94,6 +96,9 @@ public class TestService {
         int questionCount = 0;
         int answerCount = 0;
 
+        // pastikan folder upload ada
+        Files.createDirectories(Paths.get(UPLOAD_DIR));
+
         try (InputStream is = file.getInputStream()) {
             XWPFDocument document = new XWPFDocument(is);
 
@@ -102,104 +107,136 @@ public class TestService {
             Question currentQuestion = null;
             String currentJenis = "PILIHAN GANDA";
 
-            List<String> allTexts = new ArrayList<>();
-            for (XWPFParagraph p : document.getParagraphs()) {
-                String text = p.getText().trim();
-                if (!text.isEmpty()) allTexts.add(text);
-            }
+            // Loop semua elemen di dokumen, termasuk paragraf dan gambar
+            for (IBodyElement element : document.getBodyElements()) {
 
-            for (XWPFTable table : document.getTables()) {
-                for (XWPFTableRow row : table.getRows()) {
-                    for (XWPFTableCell cell : row.getTableCells()) {
-                        for (XWPFParagraph p : cell.getParagraphs()) {
-                            String text = p.getText().trim();
-                            if (!text.isEmpty()) allTexts.add(text);
+                if (element instanceof XWPFParagraph paragraph) {
+                    String text = paragraph.getText().trim();
+
+                    // Deteksi SUB_TEST
+                    if (text.startsWith("SUB_TEST:")) {
+                        currentParentSubtest = new QuestionSubtest();
+                        String namaSubtest = text.replace("SUB_TEST:", "").trim();
+                        String jenis = "PILIHAN GANDA";
+                        if (namaSubtest.contains("[")) {
+                            int start = namaSubtest.indexOf("[");
+                            int end = namaSubtest.indexOf("]");
+                            if (start != -1 && end != -1) {
+                                jenis = namaSubtest.substring(start + 1, end).trim().toUpperCase();
+                                namaSubtest = namaSubtest.substring(0, start).trim();
+                            }
+                        }
+
+                        currentJenis = jenis;
+                        currentParentSubtest.setNama(namaSubtest);
+                        currentParentSubtest.setDeskripsi("Imported from Word");
+                        currentParentSubtest.setIsbagian(false);
+                        currentParentSubtest.setTest(test);
+                        currentParentSubtest.setCreatedAt(System.currentTimeMillis());
+                        subtestRepository.save(currentParentSubtest);
+                        importedSubtests.add(currentParentSubtest);
+                        subtestCount++;
+                        continue;
+                    }
+
+                    // Deteksi BAGIAN_SOAL
+                    if (text.startsWith("BAGIAN_SOAL:")) {
+                        currentBagian = new QuestionSubtest();
+                        currentBagian.setNama(text.replace("BAGIAN_SOAL:", "").trim());
+                        currentBagian.setDeskripsi("Imported from Word");
+                        currentBagian.setIsbagian(true);
+                        currentBagian.setTest(test);
+                        currentBagian.setParent(currentParentSubtest);
+                        currentBagian.setCreatedAt(System.currentTimeMillis());
+                        subtestRepository.save(currentBagian);
+                        importedSubtests.add(currentBagian);
+                        continue;
+                    }
+
+                    // Deteksi nomor soal (misal "1. ..." atau "2. ...")
+                    if (text.matches("^\\d+\\..*")) {
+                        currentQuestion = new Question();
+                        currentQuestion.setPertanyaan(text.replaceFirst("^\\d+\\.", "").trim());
+                        currentQuestion.setRingkasan("-");
+                        currentQuestion.setJenis(currentJenis);
+                        currentQuestion.setIsrandomanswer(currentJenis.equalsIgnoreCase("PILIHAN GANDA") && isRandomAnswer);
+                        currentQuestion.setSub_jenis_test(currentParentSubtest.getNama());
+                        currentQuestion.setQuestionSubtest(currentBagian);
+                        currentQuestion.setCreatedAt(System.currentTimeMillis());
+
+                        // Cek apakah ada gambar di paragraf ini
+                        for (XWPFRun run : paragraph.getRuns()) {
+                            for (XWPFPicture pic : run.getEmbeddedPictures()) {
+                                String imageFileName = UUID.randomUUID() + ".png";
+                                String imagePath = UPLOAD_DIR + imageFileName;
+
+                                try (FileOutputStream fos = new FileOutputStream(imagePath)) {
+                                    fos.write(pic.getPictureData().getData());
+                                }
+
+                                // Simpan URL gambar
+                                currentQuestion.setImg_url(imagePath);
+                            }
+                        }
+
+                        questionRepository.save(currentQuestion);
+                        importedQuestions.add(currentQuestion);
+                        questionCount++;
+
+                        if (currentBagian.getQuestions() == null) {
+                            currentBagian.setQuestions(new ArrayList<>());
+                        }
+                        currentBagian.getQuestions().add(currentQuestion);
+                        continue;
+                    }
+
+                    // Deteksi jawaban (A-D)
+                    if (text.matches("^[A-Da-d]\\..*")) {
+                        boolean isCorrect = text.contains("*");
+                        String answerText = text.replace("*", "").trim();
+
+                        Answer answer = new Answer();
+                        answer.setTeks(answerText);
+                        answer.setBobot(1L);
+                        answer.setIsanswer(isCorrect);
+                        answer.setQuestion(currentQuestion);
+                        answer.setCreatedAt(System.currentTimeMillis());
+
+                        answerRepository.save(answer);
+                        importedAnswers.add(answer);
+                        answerCount++;
+
+                        if (currentQuestion.getAnswers() == null) {
+                            currentQuestion.setAnswers(new ArrayList<>());
+                        }
+                        currentQuestion.getAnswers().add(answer);
+                    }
+                }
+
+                // Jika elemen adalah tabel
+                if (element instanceof XWPFTable table) {
+                    for (XWPFTableRow row : table.getRows()) {
+                        for (XWPFTableCell cell : row.getTableCells()) {
+                            for (XWPFParagraph p : cell.getParagraphs()) {
+                                String text = p.getText().trim();
+                                if (text.matches("^\\d+\\..*")) {
+                                    // Soal di dalam tabel
+                                    currentQuestion = new Question();
+                                    currentQuestion.setPertanyaan(text.replaceFirst("^\\d+\\.", "").trim());
+                                    currentQuestion.setJenis(currentJenis);
+                                    currentQuestion.setQuestionSubtest(currentBagian);
+                                    currentQuestion.setCreatedAt(System.currentTimeMillis());
+                                    questionRepository.save(currentQuestion);
+                                    importedQuestions.add(currentQuestion);
+                                    questionCount++;
+                                }
+                            }
                         }
                     }
                 }
             }
-
-            for (String text : allTexts) {
-                if (text.startsWith("SUB_TEST:")) {
-                    currentParentSubtest = new QuestionSubtest();
-
-                    String namaSubtest = text.replace("SUB_TEST:", "").trim();
-                    String jenis = "PILIHAN GANDA";
-                    if (namaSubtest.contains("[")) {
-                        int start = namaSubtest.indexOf("[");
-                        int end = namaSubtest.indexOf("]");
-                        if (start != -1 && end != -1) {
-                            jenis = namaSubtest.substring(start + 1, end).trim().toUpperCase();
-                            namaSubtest = namaSubtest.substring(0, start).trim();
-                        }
-                    }
-
-                    currentJenis = jenis;
-                    currentParentSubtest.setNama(namaSubtest);
-                    currentParentSubtest.setDeskripsi("Imported from Word");
-                    currentParentSubtest.setIsbagian(false);
-                    currentParentSubtest.setTest(test);
-                    currentParentSubtest.setCreatedAt(System.currentTimeMillis());
-                    subtestRepository.save(currentParentSubtest);
-                    importedSubtests.add(currentParentSubtest);
-                    subtestCount++;
-                }
-
-                else if (text.startsWith("BAGIAN_SOAL:")) {
-                    currentBagian = new QuestionSubtest();
-                    currentBagian.setNama(text.replace("BAGIAN_SOAL:", "").trim());
-                    currentBagian.setDeskripsi("Imported from Word");
-                    currentBagian.setIsbagian(true);
-                    currentBagian.setTest(test);
-                    currentBagian.setParent(currentParentSubtest);
-                    currentBagian.setCreatedAt(System.currentTimeMillis());
-                    subtestRepository.save(currentBagian);
-                    importedSubtests.add(currentBagian);
-                }
-
-                else if (text.matches("^\\d+\\..*")) {
-                    currentQuestion = new Question();
-                    currentQuestion.setPertanyaan(text.replaceFirst("^\\d+\\.", "").trim());
-                    currentQuestion.setRingkasan("-");
-                    currentQuestion.setJenis(currentJenis);
-                    currentQuestion.setIsrandomanswer(currentJenis.equalsIgnoreCase("PILIHAN GANDA") && isRandomAnswer);
-                    currentQuestion.setSub_jenis_test(currentParentSubtest.getNama());
-                    currentQuestion.setQuestionSubtest(currentBagian);
-                    currentQuestion.setCreatedAt(System.currentTimeMillis());
-                    questionRepository.save(currentQuestion);
-                    importedQuestions.add(currentQuestion);
-
-                    questionCount++;
-
-                    if (currentBagian.getQuestions() == null) {
-                        currentBagian.setQuestions(new ArrayList<>());
-                    }
-                    currentBagian.getQuestions().add(currentQuestion);
-                }
-
-                else if (text.matches("^[A-Da-d]\\..*")) {
-                    boolean isCorrect = text.contains("*");
-                    String answerText = text.replace("*", "").trim();
-
-                    Answer answer = new Answer();
-                    answer.setTeks(answerText);
-                    answer.setBobot(1L);
-                    answer.setIsanswer(isCorrect);
-                    answer.setQuestion(currentQuestion);
-                    answer.setCreatedAt(System.currentTimeMillis());
-                    answerRepository.save(answer);
-                    importedAnswers.add(answer);
-                    answerCount++;
-                    if (currentQuestion.getAnswers() == null) {
-                        currentQuestion.setAnswers(new ArrayList<>());
-                    }
-                    currentQuestion.getAnswers().add(answer);
-                }
-            }
-
         }
 
-        // return summary log
         return Map.of(
                 "subtests_imported", subtestCount,
                 "questions_imported", questionCount,
