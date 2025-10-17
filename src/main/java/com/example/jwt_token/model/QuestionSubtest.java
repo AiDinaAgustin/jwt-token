@@ -42,7 +42,7 @@ public class QuestionSubtest {
     private Test test;
 
     // Relasi baru: satu subtest punya banyak question
-    @OneToMany(mappedBy = "questionSubtest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "questionSubtest", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnoreProperties("questionSubtest")
     private List<Question> questions;
 

@@ -86,6 +86,10 @@ public class TestService {
 
         Test test = testOpt.get();
 
+        List<QuestionSubtest> importedSubtests = new ArrayList<>();
+        List<Question> importedQuestions = new ArrayList<>();
+        List<Answer> importedAnswers = new ArrayList<>();
+
         int subtestCount = 0;
         int questionCount = 0;
         int answerCount = 0;
@@ -137,6 +141,7 @@ public class TestService {
                     currentParentSubtest.setTest(test);
                     currentParentSubtest.setCreatedAt(System.currentTimeMillis());
                     subtestRepository.save(currentParentSubtest);
+                    importedSubtests.add(currentParentSubtest);
                     subtestCount++;
                 }
 
@@ -149,6 +154,7 @@ public class TestService {
                     currentBagian.setParent(currentParentSubtest);
                     currentBagian.setCreatedAt(System.currentTimeMillis());
                     subtestRepository.save(currentBagian);
+                    importedSubtests.add(currentBagian);
                 }
 
                 else if (text.matches("^\\d+\\..*")) {
@@ -161,7 +167,14 @@ public class TestService {
                     currentQuestion.setQuestionSubtest(currentBagian);
                     currentQuestion.setCreatedAt(System.currentTimeMillis());
                     questionRepository.save(currentQuestion);
+                    importedQuestions.add(currentQuestion);
+
                     questionCount++;
+
+                    if (currentBagian.getQuestions() == null) {
+                        currentBagian.setQuestions(new ArrayList<>());
+                    }
+                    currentBagian.getQuestions().add(currentQuestion);
                 }
 
                 else if (text.matches("^[A-Da-d]\\..*")) {
@@ -175,7 +188,12 @@ public class TestService {
                     answer.setQuestion(currentQuestion);
                     answer.setCreatedAt(System.currentTimeMillis());
                     answerRepository.save(answer);
+                    importedAnswers.add(answer);
                     answerCount++;
+                    if (currentQuestion.getAnswers() == null) {
+                        currentQuestion.setAnswers(new ArrayList<>());
+                    }
+                    currentQuestion.getAnswers().add(answer);
                 }
             }
 
@@ -185,7 +203,10 @@ public class TestService {
         return Map.of(
                 "subtests_imported", subtestCount,
                 "questions_imported", questionCount,
-                "answers_imported", answerCount
+                "answers_imported", answerCount,
+                "data", Map.of(
+                        "subtests", importedSubtests
+                )
         );
     }
 

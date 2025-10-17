@@ -37,11 +37,11 @@ public class Question {
     private String sub_jenis_test;
 
     @JsonIgnoreProperties({"mst_questions"})
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "subtest_id", referencedColumnName = "id")
     private QuestionSubtest questionSubtest;
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnoreProperties("question")
     private List<Answer> answers;
 }
