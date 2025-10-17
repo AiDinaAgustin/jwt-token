@@ -33,7 +33,7 @@ public class AnswerService {
 
         Answer answer = new Answer();
         answer.setTeks(answerRequest.getTeks());
-        answer.setBobot(answerRequest.getBobot());
+        answer.setBobot(1L);
         answer.setIsanswer(answerRequest.getIsanswer());
         answer.setQuestion(question);
         answer.setCreatedAt(System.currentTimeMillis());
@@ -51,7 +51,7 @@ public class AnswerService {
         }
 
         existingAnswer.setTeks(answerRequest.getTeks());
-        existingAnswer.setBobot(answerRequest.getBobot());
+        existingAnswer.setBobot(1L);
         existingAnswer.setIsanswer(answerRequest.getIsanswer());
         existingAnswer.setQuestion(question);
         existingAnswer.setUpdatedAt(System.currentTimeMillis());

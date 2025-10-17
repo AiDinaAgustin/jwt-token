@@ -20,9 +20,6 @@ public class AnswerRequest {
     @NotBlank(message = "Teks is required")
     private String teks;
 
-    @NotNull(message = "Bobot is required")
-    private Long bobot;
-
     @NotNull(message = "isanswer is required")
     private Boolean isanswer;
 
