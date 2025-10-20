@@ -22,6 +22,7 @@ import java.util.*;
 public class SeleksiService {
 
     private final String UPLOAD_DIR = "uploads/questions/";
+    private final String UPLOAD_ANSWER_DIR = "uploads/answers/";
 
     private final SeleksiRepository seleksiRepository;
     private final SekolahService sekolahService;
@@ -149,6 +150,7 @@ public class SeleksiService {
 
         // pastikan folder upload ada
         Files.createDirectories(Paths.get(UPLOAD_DIR));
+        Files.createDirectories(Paths.get(UPLOAD_ANSWER_DIR));
 
         try (InputStream is = file.getInputStream()) {
             XWPFDocument document = new XWPFDocument(is);
@@ -268,23 +270,51 @@ public class SeleksiService {
                     // Deteksi jawaban (A-D)
                     if (text.matches("^[A-Da-d]\\..*")) {
                         boolean isCorrect = text.contains("*");
-                        String answerText = text.replace("*", "").trim();
+                        String cleanText = text.replace("*", "").trim();
 
                         Answer answer = new Answer();
-                        answer.setTeks(answerText);
+                        answer.setTeks(cleanText);
                         answer.setBobot(1L);
                         answer.setIsanswer(isCorrect);
                         answer.setQuestion(currentQuestion);
                         answer.setCreatedAt(System.currentTimeMillis());
 
+                        // Jika ada gambar di jawaban
+                        for (XWPFRun run : paragraph.getRuns()) {
+                            for (XWPFPicture pic : run.getEmbeddedPictures()) {
+                                String imageFileName = UUID.randomUUID() + ".png";
+                                Path imagePath = Paths.get(UPLOAD_ANSWER_DIR, imageFileName);
+                                try (FileOutputStream fos = new FileOutputStream(imagePath.toFile())) {
+                                    fos.write(pic.getPictureData().getData());
+                                }
+                                answer.setImg_url("/" + imagePath.toString().replace("\\", "/"));
+                            }
+                        }
+
                         answerRepository.save(answer);
                         importedAnswers.add(answer);
                         answerCount++;
 
-                        if (currentQuestion.getAnswers() == null) {
+                        if (currentQuestion.getAnswers() == null)
                             currentQuestion.setAnswers(new ArrayList<>());
-                        }
                         currentQuestion.getAnswers().add(answer);
+
+                        continue;
+                    }
+
+                    if (hasPicture && (text.isEmpty() || text.isBlank()) && !importedAnswers.isEmpty()) {
+                        Answer lastAnswer = importedAnswers.get(importedAnswers.size() - 1);
+                        for (XWPFRun run : paragraph.getRuns()) {
+                            for (XWPFPicture pic : run.getEmbeddedPictures()) {
+                                String imageFileName = UUID.randomUUID() + ".png";
+                                Path imagePath = Paths.get(UPLOAD_ANSWER_DIR, imageFileName);
+                                try (FileOutputStream fos = new FileOutputStream(imagePath.toFile())) {
+                                    fos.write(pic.getPictureData().getData());
+                                }
+                                lastAnswer.setImg_url("/" + imagePath.toString().replace("\\", "/"));
+                                answerRepository.save(lastAnswer);
+                            }
+                        }
                     }
                 }
 
