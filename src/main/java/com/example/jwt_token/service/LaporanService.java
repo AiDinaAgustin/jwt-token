@@ -60,7 +60,7 @@ public class LaporanService {
 
     private void createHeaderRow(Sheet sheet, CellStyle headerStyle) {
         Row header = sheet.createRow(0);
-        String[] columns = {"No", "No Peserta", "Nama Peserta", "Email", "Score"};
+        String[] columns = {"No", "No Peserta", "Nama Peserta", "Email", "Nilai"};
         for (int i = 0; i < columns.length; i++) {
             Cell cell = header.createCell(i);
             cell.setCellValue(columns[i]);
