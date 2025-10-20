@@ -22,7 +22,7 @@ public class LaporanController {
         byte[] excelData = testResultExportService.exportToExcel();
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=test_results.xlsx")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Laporan-Score-Test.xlsx")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(excelData);
     }
