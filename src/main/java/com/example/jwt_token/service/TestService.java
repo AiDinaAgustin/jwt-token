@@ -189,7 +189,7 @@ public class TestService {
                     if (text.matches("^\\d+\\..*")) {
                         currentQuestion = new Question();
                         currentQuestion.setPertanyaan(text.replaceFirst("^\\d+\\.", "").trim());
-                        currentQuestion.setRingkasan("-");
+                        currentQuestion.setRingkasan(text.replaceFirst("^\\d+\\.", "").trim());
                         currentQuestion.setJenis(currentJenis);
                         currentQuestion.setIsrandomanswer(currentJenis.equalsIgnoreCase("PILIHAN GANDA") && isRandomAnswer);
                         currentQuestion.setSub_jenis_test(currentParentSubtest.getNama());
