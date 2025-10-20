@@ -12,11 +12,13 @@ import com.example.jwt_token.repository.TestRepository;
 import lombok.AllArgsConstructor;
 import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
@@ -30,7 +32,7 @@ public class TestService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
 
-    private final String UPLOAD_DIR = "uploads/questions/";
+    private static final String UPLOAD_DIR = "uploads/questions/";
 
     // Get All Test
     public List<Test> getAllTests() {
@@ -80,6 +82,7 @@ public class TestService {
         return false;
     }
 
+    @Transactional
     public Map<String, Object> importFromWord(MultipartFile file, Long testId, boolean isRandomAnswer) throws Exception {
         Optional<Test> testOpt = testRepository.findById(testId);
         if (testOpt.isEmpty()) {
@@ -96,7 +99,7 @@ public class TestService {
         int questionCount = 0;
         int answerCount = 0;
 
-        // pastikan folder upload ada
+        // pastikan folder upload tersedia
         Files.createDirectories(Paths.get(UPLOAD_DIR));
 
         try (InputStream is = file.getInputStream()) {
@@ -107,13 +110,40 @@ public class TestService {
             Question currentQuestion = null;
             String currentJenis = "PILIHAN GANDA";
 
-            // Loop semua elemen di dokumen, termasuk paragraf dan gambar
             for (IBodyElement element : document.getBodyElements()) {
 
+                // ================= PARAGRAF =================
                 if (element instanceof XWPFParagraph paragraph) {
                     String text = paragraph.getText().trim();
 
-                    // Deteksi SUB_TEST
+                    // Deteksi apakah paragraf berisi gambar tanpa teks
+                    boolean hasPicture = false;
+                    for (XWPFRun run : paragraph.getRuns()) {
+                        if (!run.getEmbeddedPictures().isEmpty()) {
+                            hasPicture = true;
+                            break;
+                        }
+                    }
+
+                    // Jika paragraf hanya berisi gambar → kaitkan dengan soal terakhir
+                    if ((text.isEmpty() || text.isBlank()) && hasPicture && currentQuestion != null) {
+                        for (XWPFRun run : paragraph.getRuns()) {
+                            for (XWPFPicture pic : run.getEmbeddedPictures()) {
+                                String imageFileName = UUID.randomUUID() + ".png";
+                                Path imagePath = Paths.get(UPLOAD_DIR, imageFileName);
+
+                                try (FileOutputStream fos = new FileOutputStream(imagePath.toFile())) {
+                                    fos.write(pic.getPictureData().getData());
+                                }
+
+                                currentQuestion.setImg_url("/" + imagePath.toString().replace("\\", "/"));
+                                questionRepository.save(currentQuestion); // update DB
+                            }
+                        }
+                        continue;
+                    }
+
+                    // SUB_TEST:
                     if (text.startsWith("SUB_TEST:")) {
                         currentParentSubtest = new QuestionSubtest();
                         String namaSubtest = text.replace("SUB_TEST:", "").trim();
@@ -139,7 +169,7 @@ public class TestService {
                         continue;
                     }
 
-                    // Deteksi BAGIAN_SOAL
+                    // BAGIAN_SOAL:
                     if (text.startsWith("BAGIAN_SOAL:")) {
                         currentBagian = new QuestionSubtest();
                         currentBagian.setNama(text.replace("BAGIAN_SOAL:", "").trim());
@@ -153,7 +183,7 @@ public class TestService {
                         continue;
                     }
 
-                    // Deteksi nomor soal (misal "1. ..." atau "2. ...")
+                    // Nomor soal
                     if (text.matches("^\\d+\\..*")) {
                         currentQuestion = new Question();
                         currentQuestion.setPertanyaan(text.replaceFirst("^\\d+\\.", "").trim());
@@ -168,14 +198,11 @@ public class TestService {
                         for (XWPFRun run : paragraph.getRuns()) {
                             for (XWPFPicture pic : run.getEmbeddedPictures()) {
                                 String imageFileName = UUID.randomUUID() + ".png";
-                                String imagePath = UPLOAD_DIR + imageFileName;
-
-                                try (FileOutputStream fos = new FileOutputStream(imagePath)) {
+                                Path imagePath = Paths.get(UPLOAD_DIR, imageFileName);
+                                try (FileOutputStream fos = new FileOutputStream(imagePath.toFile())) {
                                     fos.write(pic.getPictureData().getData());
                                 }
-
-                                // Simpan URL gambar
-                                currentQuestion.setImg_url(imagePath);
+                                currentQuestion.setImg_url("/" + imagePath.toString().replace("\\", "/"));
                             }
                         }
 
@@ -183,14 +210,15 @@ public class TestService {
                         importedQuestions.add(currentQuestion);
                         questionCount++;
 
-                        if (currentBagian.getQuestions() == null) {
-                            currentBagian.setQuestions(new ArrayList<>());
+                        if (currentBagian != null) {
+                            if (currentBagian.getQuestions() == null)
+                                currentBagian.setQuestions(new ArrayList<>());
+                            currentBagian.getQuestions().add(currentQuestion);
                         }
-                        currentBagian.getQuestions().add(currentQuestion);
                         continue;
                     }
 
-                    // Deteksi jawaban (A-D)
+                    // Jawaban
                     if (text.matches("^[A-Da-d]\\..*")) {
                         boolean isCorrect = text.contains("*");
                         String answerText = text.replace("*", "").trim();
@@ -206,26 +234,37 @@ public class TestService {
                         importedAnswers.add(answer);
                         answerCount++;
 
-                        if (currentQuestion.getAnswers() == null) {
+                        if (currentQuestion.getAnswers() == null)
                             currentQuestion.setAnswers(new ArrayList<>());
-                        }
                         currentQuestion.getAnswers().add(answer);
                     }
                 }
 
-                // Jika elemen adalah tabel
+                // ================= TABEL =================
                 if (element instanceof XWPFTable table) {
                     for (XWPFTableRow row : table.getRows()) {
                         for (XWPFTableCell cell : row.getTableCells()) {
                             for (XWPFParagraph p : cell.getParagraphs()) {
                                 String text = p.getText().trim();
                                 if (text.matches("^\\d+\\..*")) {
-                                    // Soal di dalam tabel
                                     currentQuestion = new Question();
                                     currentQuestion.setPertanyaan(text.replaceFirst("^\\d+\\.", "").trim());
                                     currentQuestion.setJenis(currentJenis);
                                     currentQuestion.setQuestionSubtest(currentBagian);
                                     currentQuestion.setCreatedAt(System.currentTimeMillis());
+
+                                    // gambar di tabel
+                                    for (XWPFRun run : p.getRuns()) {
+                                        for (XWPFPicture pic : run.getEmbeddedPictures()) {
+                                            String imageFileName = UUID.randomUUID() + ".png";
+                                            Path imagePath = Paths.get(UPLOAD_DIR, imageFileName);
+                                            try (FileOutputStream fos = new FileOutputStream(imagePath.toFile())) {
+                                                fos.write(pic.getPictureData().getData());
+                                            }
+                                            currentQuestion.setImg_url("/" + imagePath.toString().replace("\\", "/"));
+                                        }
+                                    }
+
                                     questionRepository.save(currentQuestion);
                                     importedQuestions.add(currentQuestion);
                                     questionCount++;
@@ -241,9 +280,7 @@ public class TestService {
                 "subtests_imported", subtestCount,
                 "questions_imported", questionCount,
                 "answers_imported", answerCount,
-                "data", Map.of(
-                        "subtests", importedSubtests
-                )
+                "data", Map.of("subtests", importedSubtests)
         );
     }
 
