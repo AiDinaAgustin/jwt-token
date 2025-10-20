@@ -24,5 +24,4 @@ public class TrxTestAnswerRequest {
 
     private String essayAnswer;
 
-    private Boolean isCorrect;
 }
