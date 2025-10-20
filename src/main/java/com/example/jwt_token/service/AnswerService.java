@@ -24,6 +24,11 @@ public class AnswerService {
         return question.getAnswers();
     }
 
+    // Get Answer by ID
+    public Answer getAnswerById(Long id) {
+        return answerRepository.findById(id).orElse(null);
+    }
+
     // Create Answers for a Question
     public Answer createAnswer(Long questionId, AnswerRequest answerRequest) {
         Question question = questionService.getQuestionById(questionId);
