@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
@@ -163,6 +164,33 @@ public class SeleksiService {
                 if (element instanceof XWPFParagraph paragraph) {
                     String text = paragraph.getText().trim();
 
+                    // Deteksi apakah paragraf berisi gambar tanpa teks
+                    boolean hasPicture = false;
+                    for (XWPFRun run : paragraph.getRuns()) {
+                        if (!run.getEmbeddedPictures().isEmpty()) {
+                            hasPicture = true;
+                            break;
+                        }
+                    }
+
+                    // Jika paragraf hanya berisi gambar → kaitkan dengan soal terakhir
+                    if ((text.isEmpty() || text.isBlank()) && hasPicture && currentQuestion != null) {
+                        for (XWPFRun run : paragraph.getRuns()) {
+                            for (XWPFPicture pic : run.getEmbeddedPictures()) {
+                                String imageFileName = UUID.randomUUID() + ".png";
+                                Path imagePath = Paths.get(UPLOAD_DIR, imageFileName);
+
+                                try (FileOutputStream fos = new FileOutputStream(imagePath.toFile())) {
+                                    fos.write(pic.getPictureData().getData());
+                                }
+
+                                currentQuestion.setImg_url("/" + imagePath.toString().replace("\\", "/"));
+                                questionRepository.save(currentQuestion); // update DB
+                            }
+                        }
+                        continue;
+                    }
+
                     // Deteksi SUB_TEST
                     if (text.startsWith("SUB_TEST:")) {
                         currentParentSubtest = new QuestionSubtest();
@@ -218,14 +246,11 @@ public class SeleksiService {
                         for (XWPFRun run : paragraph.getRuns()) {
                             for (XWPFPicture pic : run.getEmbeddedPictures()) {
                                 String imageFileName = UUID.randomUUID() + ".png";
-                                String imagePath = UPLOAD_DIR + imageFileName;
-
-                                try (FileOutputStream fos = new FileOutputStream(imagePath)) {
+                                Path imagePath = Paths.get(UPLOAD_DIR, imageFileName);
+                                try (FileOutputStream fos = new FileOutputStream(imagePath.toFile())) {
                                     fos.write(pic.getPictureData().getData());
                                 }
-
-                                // Simpan URL gambar
-                                currentQuestion.setImg_url(imagePath);
+                                currentQuestion.setImg_url("/" + imagePath.toString().replace("\\", "/"));
                             }
                         }
 
@@ -270,12 +295,24 @@ public class SeleksiService {
                             for (XWPFParagraph p : cell.getParagraphs()) {
                                 String text = p.getText().trim();
                                 if (text.matches("^\\d+\\..*")) {
-                                    // Soal di dalam tabel
                                     currentQuestion = new Question();
                                     currentQuestion.setPertanyaan(text.replaceFirst("^\\d+\\.", "").trim());
                                     currentQuestion.setJenis(currentJenis);
                                     currentQuestion.setQuestionSubtest(currentBagian);
                                     currentQuestion.setCreatedAt(System.currentTimeMillis());
+
+                                    // gambar di tabel
+                                    for (XWPFRun run : p.getRuns()) {
+                                        for (XWPFPicture pic : run.getEmbeddedPictures()) {
+                                            String imageFileName = UUID.randomUUID() + ".png";
+                                            Path imagePath = Paths.get(UPLOAD_DIR, imageFileName);
+                                            try (FileOutputStream fos = new FileOutputStream(imagePath.toFile())) {
+                                                fos.write(pic.getPictureData().getData());
+                                            }
+                                            currentQuestion.setImg_url("/" + imagePath.toString().replace("\\", "/"));
+                                        }
+                                    }
+
                                     questionRepository.save(currentQuestion);
                                     importedQuestions.add(currentQuestion);
                                     questionCount++;
