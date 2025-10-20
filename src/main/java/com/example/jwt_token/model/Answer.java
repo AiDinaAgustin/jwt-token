@@ -25,6 +25,8 @@ public class Answer {
     @Column(nullable = false)
     private Boolean isanswer;
 
+    private String img_url;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id", referencedColumnName = "id")
