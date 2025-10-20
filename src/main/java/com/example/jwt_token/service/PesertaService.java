@@ -30,7 +30,7 @@ public class PesertaService {
 
         peserta.setNama(pesertaRequest.getNama());
         peserta.setEmail(pesertaRequest.getEmail());
-        peserta.setNo_peserta(pesertaRequest.getNo_peserta());
+        peserta.setNo_peserta(generateNoPeserta());
         peserta.setCreatedAt(Instant.now().toEpochMilli());
         return pesertaRepository.save(peserta);
     }
@@ -41,7 +41,6 @@ public class PesertaService {
         if (peserta != null) {
             peserta.setNama(pesertaRequest.getNama());
             peserta.setEmail(pesertaRequest.getEmail());
-            peserta.setNo_peserta(pesertaRequest.getNo_peserta());
             peserta.setUpdatedAt(Instant.now().toEpochMilli());
             return pesertaRepository.save(peserta);
         }
@@ -56,5 +55,11 @@ public class PesertaService {
             return true;
         }
         return false;
+    }
+
+    // Generate No Peserta
+    public String generateNoPeserta() {
+        long count = pesertaRepository.count() + 1;
+        return String.format("PST%05d", count);
     }
 }

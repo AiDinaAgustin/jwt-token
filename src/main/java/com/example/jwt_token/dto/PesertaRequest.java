@@ -21,6 +21,4 @@ public class PesertaRequest {
     @Size(min = 4, max = 100, message = "Email must be between 4 and 100 characters")
     @Email
     private String email;
-
-    private String no_peserta;
 }
