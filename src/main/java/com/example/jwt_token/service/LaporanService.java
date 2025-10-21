@@ -25,9 +25,16 @@ public class LaporanService {
 
         Workbook workbook = new XSSFWorkbook();
         CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle bodyStyle = createBodyStyle(workbook);
 
         for (Test test : allTests) {
-            Sheet sheet = workbook.createSheet(test.getName());
+            // jika nama sheet sama, tambahkan suffix agar tidak error
+            String sheetName = sanitizeSheetName(test.getName());
+            if (workbook.getSheet(sheetName) != null) {
+                sheetName = sheetName + "_" + test.getId();
+            }
+
+            Sheet sheet = workbook.createSheet(sheetName);
             createHeaderRow(sheet, headerStyle);
 
             List<TrxTestAttempt> attempts = attemptRepository.findAllByTest(test);
@@ -38,20 +45,21 @@ public class LaporanService {
                 Peserta p = attempt.getPeserta();
                 Row row = sheet.createRow(rowIdx++);
 
-                row.createCell(0).setCellValue(no++);
-                row.createCell(1).setCellValue(p.getNo_peserta() != null ? p.getNo_peserta() : "-");
-                row.createCell(2).setCellValue(p.getNama());
-                row.createCell(3).setCellValue(p.getEmail());
-                row.createCell(4).setCellValue(attempt.getScore() != null ? attempt.getScore() : 0.0);
+                createCell(row, 0, no++, bodyStyle);
+                createCell(row, 1, p.getNo_peserta() != null ? p.getNo_peserta() : "-", bodyStyle);
+                createCell(row, 2, p.getNama(), bodyStyle);
+                createCell(row, 3, p.getEmail(), bodyStyle);
+                createCell(row, 4, attempt.getScore() != null ? attempt.getScore() : 0.0, bodyStyle);
+                createCell(row, 5, attempt.getStatus() != null ? attempt.getStatus().name() : "-", bodyStyle);
             }
 
-            // auto-size
+            // auto-size kolom agar rapi
             for (int i = 0; i < 6; i++) {
                 sheet.autoSizeColumn(i);
             }
         }
 
-        // Convert workbook ke byte[]
+        // Convert workbook ke byte[] untuk dikembalikan ke response
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         workbook.write(outputStream);
         workbook.close();
@@ -60,7 +68,7 @@ public class LaporanService {
 
     private void createHeaderRow(Sheet sheet, CellStyle headerStyle) {
         Row header = sheet.createRow(0);
-        String[] columns = {"No", "No Peserta", "Nama Peserta", "Email", "Nilai"};
+        String[] columns = {"NO", "NO PESERTA", "NAMA PESERTA", "EMAIL", "NILAI", "KETERANGAN"};
         for (int i = 0; i < columns.length; i++) {
             Cell cell = header.createCell(i);
             cell.setCellValue(columns[i]);
@@ -68,16 +76,55 @@ public class LaporanService {
         }
     }
 
+    // membuat cell dengan nilai dan style
+    private void createCell(Row row, int columnIndex, Object value, CellStyle style) {
+        Cell cell = row.createCell(columnIndex);
+        if (value instanceof Number) {
+            cell.setCellValue(((Number) value).doubleValue());
+        } else {
+            cell.setCellValue(value.toString());
+        }
+        cell.setCellStyle(style);
+    }
+
+    // membuat style untuk header dengan border)
     private CellStyle createHeaderStyle(Workbook workbook) {
         Font headerFont = workbook.createFont();
-        headerFont.setBold(true);
+        headerFont.setBold(false);
 
         CellStyle style = workbook.createCellStyle();
         style.setFont(headerFont);
-        style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
-        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        // tambahkan border di semua sisi
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+
         return style;
     }
+
+    // membuat style untuk isi/body
+    private CellStyle createBodyStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        // tambahkan border di semua sisi
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+
+        return style;
+    }
+
+    // untuk memastikan nama sheet aman (tidak error di Excel)
+    private String sanitizeSheetName(String name) {
+        String safeName = name.replaceAll("[\\\\/?*\\[\\]:]", "_");
+        return safeName.length() > 31 ? safeName.substring(0, 31) : safeName;
+    }
+
 }
